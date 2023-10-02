@@ -476,12 +476,19 @@ Curve::load(std::string const &path, bool transpose, unsigned xCol, unsigned yCo
           yCol + 1,
           i + 1,
           asString.c_str());
+      } catch (std::runtime_error const &e) {
+        fprintf(
+          stderr,
+          "warning: %s:row %d: col %d: out of bounds! (blank line?)\n",
+          path.c_str(),
+          yCol + 1,
+          i + 1);
       }
     }
   } else {
     if (xCol >= cols)
       throw std::runtime_error("Column for X is out of range (file has " + std::to_string(rows) + " data columns)");
-    if (yCol >= rows)
+    if (yCol >= cols)
       throw std::runtime_error("Column for Y is out of range (file has " + std::to_string(rows) + " data columns)");
     
     for (auto i = 0u; i < rows; ++i) {
@@ -496,6 +503,13 @@ Curve::load(std::string const &path, bool transpose, unsigned xCol, unsigned yCo
           i + 1,
           yCol + 1,
           asString.c_str());
+      } catch (std::runtime_error const &e) {
+        fprintf(
+          stderr,
+          "warning: %s:row %d: col %d: out of bounds! (blank line?)\n",
+          path.c_str(),
+          i + 1,
+          yCol + 1);
       }
     }
   }

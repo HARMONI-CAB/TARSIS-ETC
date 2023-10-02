@@ -22,9 +22,7 @@
 #include <Curve.h>
 #include <Spectrum.h>
 #include <cmath>
-
-#define STD2FWHM   2.35482004503095 // sqrt(8 * ln(2))
-#define INVSQRT2PI 0.39894228040143 // 1 / sqrt(2 * pi)
+#include <Helpers.h>
 
 //
 // Turn FWHM to the inverse of sigma. This speeds up the calculation of
@@ -73,23 +71,11 @@ InstrumentModel::InstrumentModel()
 
   m_properties    = &ConfigManager::get<InstrumentProperties>("tarsis");
 
-  m_skySpectrum   = new Spectrum();
   m_attenSpectrum = new Spectrum();
 
   m_blueML15      = new Curve();
   m_blueNBB       = new Curve();
   m_redML15       = new Curve();
-
-  //
-  // http://www.caha.es/sanchez/sky/
-  // X axis is Angstrom
-  // Y Axis is 1e-16 Erg / (s cm^2 A) per 2.7 arcsec diam fiber. I.e.,
-  //            1.7466e-17 erg / (s cm^2 A arcsec^2), i.e.
-  //             7.4309394e-10 W / (m^2 A sr)
-
-  m_skySpectrum->load(dataFile("CAHASky.csv"), false, 1, 2);
-  m_skySpectrum->scaleAxis(YAxis, 7.4309394e-10); // To SI units
-  m_skySpectrum->scaleAxis(XAxis, 1e-10);         // Convert angstrom to meters
 
   m_blueML15->load(dataFile("blueTransmission.csv"), true, 0, 1);
   m_blueML15->scaleAxis(XAxis, 1e-9);
@@ -172,9 +158,6 @@ InstrumentModel::InstrumentModel()
 
 InstrumentModel::~InstrumentModel()
 {
-  if (m_skySpectrum)
-    delete m_skySpectrum;
-  
   if (m_blueML15 != nullptr)
     delete m_blueML15;
 
@@ -331,7 +314,6 @@ InstrumentModel::setInput(InstrumentArm arm, Spectrum const &input)
   m_currentPath     = arm;
 
   m_attenSpectrum->fromExisting(input);          // Set input radiance
-  m_attenSpectrum->add(*m_skySpectrum);          // Add sky background radiance
   m_attenSpectrum->scaleAxis(YAxis, totalScale); // To irradiance
   m_attenSpectrum->multiplyBy(*transmission);    // Attenuate by transmission
 }

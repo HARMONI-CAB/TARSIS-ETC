@@ -16,6 +16,7 @@ set(LIBETC_SOURCES
   ${LIBETC_SRCDIR}/DataFileManager.cpp
   ${LIBETC_SRCDIR}/Detector.cpp
   ${LIBETC_SRCDIR}/InstrumentModel.cpp
+  ${LIBETC_SRCDIR}/SkyModel.cpp
   ${LIBETC_SRCDIR}/Spectrum.cpp)
 
 set(LIBETC_HEADERS
@@ -23,7 +24,9 @@ set(LIBETC_HEADERS
   ${LIBETC_INCLUDEDIR}/ConfigManager.h
   ${LIBETC_INCLUDEDIR}/DataFileManager.h
   ${LIBETC_INCLUDEDIR}/Detector.h
+  ${LIBETC_INCLUDEDIR}/Helpers.h
   ${LIBETC_INCLUDEDIR}/InstrumentModel.h
+  ${LIBETC_INCLUDEDIR}/SkyModel.h
   ${LIBETC_INCLUDEDIR}/Spectrum.h)
 
 add_library(

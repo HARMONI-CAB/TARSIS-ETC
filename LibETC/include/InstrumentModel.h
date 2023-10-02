@@ -31,9 +31,6 @@ class Spectrum;
 #define CAHA_APERTURE_AREA     (.25 * M_PI * CAHA_APERTURE_DIAMETER * CAHA_APERTURE_DIAMETER)
 #define CAHA_EFFECTIVE_AREA    9.093  // m^2
 
-#define SPEED_OF_LIGHT         299792458.     // m/s
-#define PLANCK_CONSTANT        6.62607015e-34 // J s
-
 #define TARSIS_SLICES          40     // Number of TARSIS slices per FOV
 #define SPECTRAL_PIXEL_LENGTH  2048   // Guessed from the resolution elements and ranges
 
@@ -60,7 +57,6 @@ enum InstrumentArm {
 
 class InstrumentModel {
     InstrumentProperties *m_properties = nullptr; // Borrowed
-    Spectrum *m_skySpectrum   = nullptr;          // Owned, sky spectrum
     Curve    *m_blueML15      = nullptr;          // Owned, blue + ML15
     Curve    *m_blueNBB       = nullptr;          // Owned, blue + NBB
     Curve    *m_redML15       = nullptr;          // Owned, red + ML15

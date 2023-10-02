@@ -4,27 +4,10 @@
 #include <ConfigManager.h>
 #include <DataFileManager.h>
 #include <InstrumentModel.h>
+#include <SkyModel.h>
 #include <stdexcept>
 #include <Detector.h>
-
-#define JANSKY 1e-26         // W / (m^2 Hz)
-#define ARCSEC 4.8481368e-06 // radian
-
-static inline double
-surfaceBrightnessAB2radiance(double mag, double wl)
-{
-  double fnu     = pow(10, -.4 * mag) * 3631 * JANSKY / (ARCSEC * ARCSEC);
-  double flambda = SPEED_OF_LIGHT / (wl * wl) * fnu;
-
-  return flambda;
-}
-
-static inline double
-surfaceBrightnessVega2radiance(double mag, double wl)
-{
-  double flambda     = pow(10, -.4 * mag) * 0.03631 / (ARCSEC * ARCSEC);
-  return flambda;
-}
+#include <Helpers.h>
 
 int
 main(void)
@@ -40,8 +23,18 @@ main(void)
   testSpectrum.save("input.csv");
 
   try {
-    Detector *detector = new Detector();
+    SkyModel *skyModel = new SkyModel();
     InstrumentModel *model = new InstrumentModel();
+    Detector *detector = new Detector();
+
+    skyModel = new SkyModel();
+
+    skyModel->setAirmass(1.5);
+    skyModel->setMoon(70);
+
+    Spectrum *spec = skyModel->makeSkySpectrum(testSpectrum);
+
+    spec->save("noisyspec.csv");
 
     auto detName = model->properties()->detector;
 
@@ -52,7 +45,7 @@ main(void)
     InstrumentArm arm = BlueArm;
     std::string armDesc = arm == BlueArm ? "blue" : "red";
 
-    model->setInput(arm, testSpectrum);
+    model->setInput(arm, *spec);
 
     for (auto i = 0; i < TARSIS_SLICES; ++i) {
       Spectrum *result = model->makePixelPhotonFlux(i);
@@ -66,6 +59,10 @@ main(void)
     }
 
     delete model;
+    delete skyModel;
+    delete detector;
+    delete spec;
+
   } catch (std::runtime_error const &e) {
     fprintf(stderr, "Exception: %s\n", e.what());
   }
