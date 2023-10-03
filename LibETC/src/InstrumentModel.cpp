@@ -96,7 +96,6 @@ InstrumentModel::InstrumentModel()
     m_blueDisp[i]->scaleAxis(XAxis, 1e-9);
     m_blueDisp[i]->scaleAxis(YAxis, 1e-9);
     m_blueDisp[i]->invertAxis(YAxis);
-    m_blueDisp[i]->save("blueDisp_" + std::to_string(i) + ".csv");
 
     // Units of this datafile are nm -> px
     m_blueREPx[i] = new Curve();
@@ -106,7 +105,6 @@ InstrumentModel::InstrumentModel()
     m_blueREPx[i]->scaleAxis(XAxis, 1e-9);
     
     fwhm2invStd(m_blueREPx[i]);
-    m_blueREPx[i]->save("blueREPx_" + std::to_string(i) + ".csv");
 
     // We want to have a curve that connects wavelengths to pixels, therefore:
     // 1. We assign the m_blueDisp[i] to it (m -> px/m)
@@ -114,13 +112,11 @@ InstrumentModel::InstrumentModel()
     m_blueW2Px[i] = new Curve();
     m_blueW2Px[i]->assign(*m_blueDisp[i]);
     m_blueW2Px[i]->integrate();
-    m_blueW2Px[i]->save("blueW2Px_" + std::to_string(i) + ".csv");
 
     // We now want the pixel-to-wavelength relationship. Easy. Just flip X and Y
     m_bluePx2W[i] = new Curve();
     m_bluePx2W[i]->assign(*m_blueW2Px[i]);
     m_bluePx2W[i]->flip();
-    m_bluePx2W[i]->save("bluePx2W_" + std::to_string(i) + ".csv");
 
     ///////////////////////////// Repeat for red ///////////////////////////////
     // Units of this datafile are nm -> nm/px
@@ -387,13 +383,8 @@ InstrumentModel::makePixelPhotonFlux(unsigned int slice) const
   // 4. Convert power to photons by means of the planck constant. Note that
   //    ph = E / (hf) = E lambda / hc
 
-  w2px.save("w2px.csv");
-  px2w.save("px2w.csv");
-
-  m_attenSpectrum->save("atten.csv");
   dispSpectrum.fromExisting(*m_attenSpectrum);
   dispSpectrum.scaleAxis(XAxis, w2px, disp);
-  dispSpectrum.save("scaled.csv");
 
   Spectrum *pixelFlux = new Spectrum();
   auto &pxFRef = *pixelFlux;

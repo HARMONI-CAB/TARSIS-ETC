@@ -107,7 +107,6 @@ void
 Simulation::setInput(Spectrum const &spec)
 {
   m_input = spec;
-  m_input.save("asloaded.csv");
 }
 
 // Compute spectrum's R magnitude
