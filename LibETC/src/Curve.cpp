@@ -75,6 +75,69 @@ Curve::setUnits(CurveAxis axis, std::string const &units)
   }
 }
 
+double
+Curve::integral() const
+{
+  std::map<double, double>::const_iterator it, next;
+  double accum = 0;
+  double err   = 0;
+
+  if (m_oobRight + m_oobLeft != 0)
+    return std::numeric_limits<double>::infinity() * (m_oobLeft + m_oobRight);
+  
+  it = m_curve.begin();
+  if (it == m_curve.end())
+    return 0;
+
+  while ((next = std::next(it)) != m_curve.end()) {
+    double dx = next->first - it->first;
+    double my = .5 * (next->second + it->second);
+
+    // More Kahan
+    double term_real         = my * dx - err;
+    volatile double tmp      = accum + term_real;
+    volatile double term_err = tmp - accum;
+    err                      = term_err - term_real;
+    accum                    = tmp;
+
+    it = next;
+  }
+
+  return accum;
+}
+
+double
+Curve::distMean() const
+{
+  std::map<double, double>::const_iterator it, next;
+  double accum = 0;
+  double err   = 0;
+
+  if (m_oobRight + m_oobLeft != 0)
+    return .5 * (m_oobLeft + m_oobRight);
+  
+  it = m_curve.begin();
+  if (it == m_curve.end())
+    return it->first;
+
+  while ((next = std::next(it)) != m_curve.end()) {
+    double dx = next->first - it->first;
+    double x0 = .5 * (next->first + it->first);
+    double my = .5 * (next->second + it->second);
+
+    // More Kahan
+    double term_real         = x0 * my * dx - err;
+    volatile double tmp      = accum + term_real;
+    volatile double term_err = tmp - accum;
+    err                      = term_err - term_real;
+    accum                    = tmp;
+
+    it = next;
+  }
+
+  return accum / integral();
+}
+
 void
 Curve::integrate(double K)
 {

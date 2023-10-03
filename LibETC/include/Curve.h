@@ -82,9 +82,13 @@ class Curve {
 
     double operator[](double) const;
     double operator()(double) const;
+    
     CurveAssignProxy operator[](double);
 
     void setUnits(CurveAxis, std::string const &);
+    
+    double integral() const;
+    double distMean() const;
     
     void integrate(double k = 0);
     void flip();

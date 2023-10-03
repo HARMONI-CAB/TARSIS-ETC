@@ -23,7 +23,9 @@ help(const char *progName)
   fprintf(stderr, "\t-d, --detector [DET]       Set detector to DET (ML15 or NBB, default is ML15)\n");
   fprintf(stderr, "\t-e, --elevation [ANGLE]    Set elevation angle (same as -z 90-ANGLE,\n");
   fprintf(stderr, "\t                           default is 90)\n");
-  fprintf(stderr, "\t-m, --moon [PERCENT]       Set moon illumination, being 0 new\n");
+  fprintf(stderr, "\t-m, --magnitude [MAGR_AB]  Normalize spectrum to the specified R(AB)\n");
+  fprintf(stderr, "\t                           magnitude (default is 18 mag/arcsec^2)\n");
+  fprintf(stderr, "\t-M, --moon [PERCENT]       Set moon illumination, being 0 new\n");
   fprintf(stderr, "\t                           moon and 100 full moon (default is 0)\n");
   fprintf(stderr, "\t-s, --slice [SLICE]        Slice at which calculations are to be\n");
   fprintf(stderr, "\t                           done (from 1 to 40, default is 20)\n");
@@ -39,27 +41,34 @@ struct SimulationParams {
   double airmass       = 1.;
   double moon          = 0.;
   double exposure      = 3600;
+  double rABmag        = 18.;
   int    slice         = 20;
 };
 
 class Simulation {
     Spectrum  m_input;
+    Curve     m_cousinsR;
+    double    m_cousinsREquivBw;
+    double    m_cousinsREffLambda;
     Spectrum *m_sky = nullptr;
     SkyModel *m_skyModel = nullptr;
     InstrumentModel *m_tarsisModel = nullptr;
     Detector *m_det = nullptr;
     SimulationParams m_params;
 
+
   public:
     Simulation();
     ~Simulation();
 
     void setInput(Spectrum const &spec);
+    void normalizeToRMag(double mag);
     void setParams(SimulationParams const &params);
 
     void simulateArm(InstrumentArm arm);
     double signal(unsigned px) const;
     double noise(unsigned px) const;
+    double pxToWavelength(unsigned px) const;
 };
 
 Simulation::Simulation()
@@ -68,6 +77,15 @@ Simulation::Simulation()
   m_skyModel    = new SkyModel();
   m_det         = new Detector();
   m_tarsisModel = new InstrumentModel();
+
+  // 
+  // http://svo2.cab.inta-csic.es/theory/fps/index.php?id=Generic/Cousins.R&&mode=browse&gname=Generic&gname2=Cousins
+  //
+
+  m_cousinsR.load(dataFile("Generic_Cousins.R.dat"));
+  m_cousinsR.scaleAxis(XAxis, 1e-10); // X axis was in angstrom
+  m_cousinsREquivBw   = m_cousinsR.integral();
+  m_cousinsREffLambda = m_cousinsR.distMean();
 }
 
 Simulation::~Simulation()
@@ -79,7 +97,7 @@ Simulation::~Simulation()
     delete m_tarsisModel;
 
   if (m_det != nullptr)
-    delete m_tarsisModel;
+    delete m_det;
 
   if (m_sky != nullptr)
     delete m_sky;
@@ -89,8 +107,34 @@ void
 Simulation::setInput(Spectrum const &spec)
 {
   m_input = spec;
+  m_input.save("asloaded.csv");
+}
 
-  m_input.scaleAxis(XAxis, 1e9);
+// Compute spectrum's R magnitude
+void
+Simulation::normalizeToRMag(double R)
+{
+  Spectrum filtered;
+  double meanSB, desiredSB;
+
+  //
+  // The following calculation departs from the following assumption. If we
+  // feed the R filter by a flat radiance of 0 magAB (/arcsec^2), the resulting
+  // R mag must also be 0 magAB,R (/arcsec^2)
+  //
+
+  // This is the desired radiance, normalized by the R transfer
+  desiredSB = surfaceBrightnessAB2radiance(R, m_cousinsREffLambda);
+
+  // Input is assumed to be in W / (m^2 sr m)
+  filtered.fromExisting(m_input);
+  filtered.multiplyBy(m_cousinsR);
+
+  // Again, W / (m^2 sr m). But this time, normalized by the R transfer.
+  meanSB = filtered.integral() / m_cousinsREquivBw;
+  // And normalize
+
+  m_input.scaleAxis(YAxis, desiredSB / meanSB);
 }
 
 void
@@ -149,6 +193,12 @@ Simulation::noise(unsigned px) const
   return m_det->noise(px);
 }
 
+double
+Simulation::pxToWavelength(unsigned px) const
+{
+  return (*m_tarsisModel->pxToWavelength(m_params.slice))(px);
+}
+
 bool
 runSimulation(SimulationParams const &params, std::string const &path)
 {
@@ -156,28 +206,48 @@ runSimulation(SimulationParams const &params, std::string const &path)
   Spectrum input;
   Simulation *sim = nullptr;
 
+  DataFileManager::instance()->addSearchPath("../data");
+
   try {
     sim = new Simulation();
 
     // Init data
     input.load(path);
-    input.scaleAxis(XAxis, 1e9);
+    input.scaleAxis(XAxis, 1e-9);
+
+    sim->setInput(input);
+    sim->normalizeToRMag(params.rABmag);
 
     sim->setParams(params);
-    sim->setInput(input);
-
     sim->simulateArm(BlueArm);
+    
     for (auto i = 0; i < 2048; ++i)
-      printf("%s%g\n", i > 0 ? "," : "", sim->signal(i));
+      printf("%s%g", i > 0 ? "," : "", sim->pxToWavelength(i));
+    putchar('\n');
+
     for (auto i = 0; i < 2048; ++i)
-      printf("%s%g\n", i > 0 ? "," : "", sim->noise(i));
+      printf("%s%g", i > 0 ? "," : "", sim->signal(i));
+    putchar('\n');
+
+    for (auto i = 0; i < 2048; ++i)
+      printf("%s%g", i > 0 ? "," : "", sim->noise(i));
+    putchar('\n');
 
     if (params.detector == "ML15") {
       sim->simulateArm(RedArm);
+
       for (auto i = 0; i < 2048; ++i)
-        printf("%s%g\n", i > 0 ? "," : "", sim->signal(i));
+        printf("%s%g", i > 0 ? "," : "", sim->pxToWavelength(i));
+      putchar('\n');
+
       for (auto i = 0; i < 2048; ++i)
-        printf("%s%g\n", i > 0 ? "," : "", sim->noise(i));
+        printf("%s%g", i > 0 ? "," : "", sim->signal(i));
+      putchar('\n');
+
+
+      for (auto i = 0; i < 2048; ++i)
+        printf("%s%g", i > 0 ? "," : "", sim->noise(i));
+      putchar('\n');
     }
 
     ok = true;
@@ -199,13 +269,14 @@ int
 main(int argc, char **argv)
 {
   SimulationParams params;
-  const char* const short_opt = "a:e:m:s:t:z:h";
+  const char* const short_opt = "a:e:M:m:s:t:z:h";
   double angle;
   int opt;
   const option long_opt[] = {
     {"airmass",         required_argument, nullptr, 'a'},
     {"elevation",       required_argument, nullptr, 'e'},
-    {"moon",            required_argument, nullptr, 'm'},
+    {"magnitude",       required_argument, nullptr, 'm'},
+    {"moon",            required_argument, nullptr, 'M'},
     {"slice",           required_argument, nullptr, 's'},
     {"exposure",        required_argument, nullptr, 't'},
     {"zenith-distance", required_argument, nullptr, 'z'},
@@ -218,7 +289,7 @@ main(int argc, char **argv)
   while ((opt = getopt_long(argc, argv, short_opt, long_opt, nullptr)) != -1) {
     switch (opt) {
       case 'a':
-        if (sscanf(optarg, "%g", &params.airmass) < 1) {
+        if (sscanf(optarg, "%lg", &params.airmass) < 1) {
           fprintf(stderr, "%s: invalid airmass `%s'\n", argv[0], optarg);
           goto bad_option;
         }
@@ -234,7 +305,7 @@ main(int argc, char **argv)
         break;
 
       case 'e':
-        if (sscanf(optarg, "%g", &angle) < 1) {
+        if (sscanf(optarg, "%lg", &angle) < 1) {
           fprintf(stderr, "%s: invalid elevation angle `%s'\n", argv[0], optarg);
           goto bad_option;
         }
@@ -248,7 +319,14 @@ main(int argc, char **argv)
         break;
       
       case 'm':
-        if (sscanf(optarg, "%g", &params.moon) < 1) {
+        if (sscanf(optarg, "%lg", &params.rABmag) < 1) {
+          fprintf(stderr, "%s: invalid r(AB) magnitude `%s'\n", argv[0], optarg);
+          goto bad_option;
+        }
+        break;
+      
+      case 'M':
+        if (sscanf(optarg, "%lg", &params.moon) < 1) {
           fprintf(stderr, "%s: invalid moon illumination `%s'\n", argv[0], optarg);
           goto bad_option;
         }
@@ -258,7 +336,7 @@ main(int argc, char **argv)
           goto bad_option;
         }
         break;
-      
+
       case 's':
         if (sscanf(optarg, "%u", &params.slice) < 1) {
           fprintf(stderr, "%s: invalid slice number `%s'\n", argv[0], optarg);
@@ -272,7 +350,7 @@ main(int argc, char **argv)
         break;
 
       case 't':
-        if (sscanf(optarg, "%g", &params.exposure) < 1) {
+        if (sscanf(optarg, "%lg", &params.exposure) < 1) {
           fprintf(stderr, "%s: invalid exposure time `%s'\n", argv[0], optarg);
           goto bad_option;
         }
@@ -284,7 +362,7 @@ main(int argc, char **argv)
         break;
 
       case 'z':
-        if (sscanf(optarg, "%g", &angle) < 1) {
+        if (sscanf(optarg, "%lg", &angle) < 1) {
           fprintf(stderr, "%s: invalid zenith distance `%s'\n", argv[0], optarg);
           goto bad_option;
         }
