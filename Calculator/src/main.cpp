@@ -49,7 +49,6 @@ class Simulation {
     Spectrum  m_input;
     Curve     m_cousinsR;
     double    m_cousinsREquivBw;
-    double    m_cousinsREffLambda;
     Spectrum *m_sky = nullptr;
     SkyModel *m_skyModel = nullptr;
     InstrumentModel *m_tarsisModel = nullptr;
@@ -84,8 +83,9 @@ Simulation::Simulation()
 
   m_cousinsR.load(dataFile("Generic_Cousins.R.dat"));
   m_cousinsR.scaleAxis(XAxis, 1e-10); // X axis was in angstrom
-  m_cousinsREquivBw   = m_cousinsR.integral();
-  m_cousinsREffLambda = m_cousinsR.distMean();
+  m_cousinsR.invertAxis(XAxis, SPEED_OF_LIGHT); // To frequency
+
+  m_cousinsREquivBw = m_cousinsR.integral();
 }
 
 Simulation::~Simulation()
@@ -124,16 +124,19 @@ Simulation::normalizeToRMag(double R)
   //
 
   // This is the desired radiance, normalized by the R transfer
-  desiredSB = surfaceBrightnessAB2radiance(R, m_cousinsREffLambda);
+  desiredSB = surfaceBrightnessAB2FreqRadiance(R);
 
   // Input is assumed to be in W / (m^2 sr m)
   filtered.fromExisting(m_input);
+
+  // Now it is in W / (m^2 sr Hz)
+  filtered.invertAxis(XAxis, SPEED_OF_LIGHT);
   filtered.multiplyBy(m_cousinsR);
 
   // Again, W / (m^2 sr m). But this time, normalized by the R transfer.
   meanSB = filtered.integral() / m_cousinsREquivBw;
-  // And normalize
 
+  // And normalize
   m_input.scaleAxis(YAxis, desiredSB / meanSB);
 }
 
