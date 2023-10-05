@@ -11,3 +11,4 @@ project(
 # The library code is in src
 add_subdirectory(LibETC)
 add_subdirectory(Calculator)
+add_subdirectory(CalGUI)
