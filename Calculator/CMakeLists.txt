@@ -4,7 +4,7 @@ set(CALCULATOR_SRCDIR src)
 set(CMAKE_CXX_STANDARD 17)
 
 include(FindPkgConfig)
-pkg_check_modules(YAMLCPP yaml-cpp>=0.7.0)
+pkg_check_modules(YAMLCPP yaml-cpp>=0.6.0)
 
 # Add source files
 file(GLOB_RECURSE SOURCE_FILES 

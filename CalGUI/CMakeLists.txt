@@ -15,7 +15,7 @@ find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Charts)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Charts)
 
 include(FindPkgConfig)
-pkg_check_modules(YAMLCPP yaml-cpp>=0.7.0)
+pkg_check_modules(YAMLCPP yaml-cpp>=0.6.0)
 
 set(PROJECT_SOURCES
         CalculationWorker.h CalculationWorker.cpp
