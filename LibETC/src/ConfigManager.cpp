@@ -66,7 +66,9 @@ Config::operator[](std::string const &key)
 bool
 Config::load()
 {
-  std::string path = ConfigManager::instance()->getConfigFilePath(m_objectName);
+  std::string path = ConfigManager::instance()->getConfigFilePath(
+    m_objectName,
+    false);
 
   // File exists!
   if (access(path.c_str(), R_OK) != -1) {
@@ -94,7 +96,9 @@ Config::hasKey(std::string const &name) const
 bool
 Config::save()
 {
-  std::string path = ConfigManager::instance()->getConfigFilePath(m_objectName);
+  std::string path = ConfigManager::instance()->getConfigFilePath(
+    m_objectName,
+    true);
 
   if (!serialize())
     return false;
@@ -154,9 +158,12 @@ ConfigManager::saveAll()
 }
 
 std::string
-ConfigManager::getConfigFilePath(std::string const &name) const
+ConfigManager::getConfigFilePath(std::string const &name, bool write) const
 {
-  return m_configDir + "/" + name + ".yaml";
+  if (write)
+    return m_configDir + "/" + name + ".yaml";
+  else
+    return DataFileManager::instance()->resolve("config/" + name + ".yaml");
 }
 
 ConfigManager *

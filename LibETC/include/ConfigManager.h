@@ -92,7 +92,7 @@ class ConfigManager {
     static ConfigManager *instance();
     bool saveAll();
 
-    std::string getConfigFilePath(std::string const &name) const;
+    std::string getConfigFilePath(std::string const &name, bool write) const;
 
     template <class T> T *
     getConfig(std::string const &name)
