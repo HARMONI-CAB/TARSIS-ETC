@@ -31,12 +31,11 @@ jobs:
     - name: Install dependencies
       uses: "./.github/actions/linuxdeps"
     
-    - name: Build & Distribute (SigDigger)
+    - name: Build & Distribute
       run: |
         cd Scripts
         chmod a+x dist-appimage.sh
-        export LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"$PWD"/deploy-root/lib
-        SIGDIGGER_EMBED_SOAPYSDR=1 BUILDTYPE=Debug ./dist-appimage.sh 
+        BUILDTYPE=Debug ./dist-appimage.sh 
         cd ..
 
     - name: Archive AppImage files
@@ -60,11 +59,10 @@ jobs:
     - name: Install dependencies
       uses: "./.github/actions/macosdeps"
       
-    - name: Build & Distribute (SigDigger)
+    - name: Build & Distribute
       run: |
         cd Scripts
-        chmod a+x dist-dmg.sh
-        SIGDIGGER_EMBED_SOAPYSDR=1 BUILDTYPE=Debug ./dist-dmg.sh
+        BUILDTYPE=Debug ./dist-dmg.sh
         cd ..
 
     - name: Archive .DMG files

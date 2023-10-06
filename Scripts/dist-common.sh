@@ -176,7 +176,7 @@ ESCAPE=`echo -en '\033'`
 echo -en '\033[0;1m'
 
 cat << EOF
-Welcome to $ESCAPE[1;36mTARSIS-ETC$ESCAPE[0;1m...multi platform deployment script.$ESCAPE[0m
+Welcome to $ESCAPE[1;36mTARSIS-ETC$ESCAPE[0;1m multi platform deployment script.$ESCAPE[0m
 EOF
 
 echo

@@ -15,7 +15,8 @@ runs:
         version: 6.4.2
         setup-python: false
         py7zrversion: '==0.18.1'
-    
+        modules: qtcharts
+
     - name: Install coreutils
       shell:  ${{inputs.shell}}
       run: brew install coreutils
