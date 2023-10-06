@@ -14,6 +14,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Charts)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Charts)
 
+include(FindPkgConfig)
+pkg_check_modules(YAMLCPP yaml-cpp>=0.7.0)
+
 set(PROJECT_SOURCES
         CalculationWorker.h CalculationWorker.cpp
         GUIHelpers.h GUIHelpers.cpp
@@ -52,11 +55,11 @@ else()
     endif()
 endif()
 
-target_link_directories(CalGUI PRIVATE ${LIBETC_LIBDIR})
-target_link_libraries(CalGUI PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts ETC)
+target_link_directories(CalGUI PRIVATE ${LIBETC_LIBDIR} ${YAMLCPP_LIBRARY_DIRS})
+target_link_libraries(CalGUI PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts ETC ${YAMLCPP_LIBRARIES})
 target_include_directories(
   CalGUI
-  PRIVATE ../LibETC/include)
+  PRIVATE ../LibETC/include ${YAMLCPP_INCLUDE_DIRS})
 
 set_target_properties(CalGUI PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

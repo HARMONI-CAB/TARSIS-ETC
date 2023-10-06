@@ -79,7 +79,7 @@ DetectorProperties::deserialize()
     for (auto p : yamlDetectors) {
       DetectorSpec *spec = new DetectorSpec("detectors." + p.first);
       if (!spec->deserializeYamlNode(p.second)) {
-        fprintf(stderr, "%s: failed to deserialize detector\n", p.first);
+        fprintf(stderr, "%s: failed to deserialize detector\n", p.first.c_str());
         delete spec;
       }
       detectors[p.first] = spec;
