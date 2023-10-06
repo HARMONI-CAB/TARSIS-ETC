@@ -95,7 +95,6 @@ Type=Application
 Name=TARSIS ETC
 Comment=TARSIS Exposure Time Calculation tool
 Exec=CalGUI
-Icon=CalGUI
 Categories=Science;" > "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop
 
 embed_calculator_deps
