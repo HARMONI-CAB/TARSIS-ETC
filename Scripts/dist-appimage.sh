@@ -100,4 +100,3 @@ try "Calling linuxdeployqt..." linuxdeployqt "$DEPLOYROOT"/usr/share/application
 #try "Copying wrapper script..." cp "$DISTROOT"/AppRun "$DEPLOYROOT"/usr/bin/SigDigger
 #try "Setting permissions to wrapper script..." chmod a+x "$DEPLOYROOT"/usr/bin/SigDigger
 try "Calling AppImageTool and finishing..." appimagetool "$DEPLOYROOT"
-try "Renaming to $APPIMAGE_NAME..." mv *.AppImage "$DISTROOT/$APPIMAGE_NAME"
