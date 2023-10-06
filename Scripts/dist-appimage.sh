@@ -76,7 +76,7 @@ function embed_calculator_deps()
 
 function build_fixups()
 {
-    # Nothing to fix for now
+    cp -L "${BUILDROOT}/LibETC/libETC.so" "${DEPLOYROOT}/usr/lib"
     return 0
 }
 
@@ -97,8 +97,6 @@ Comment=TARSIS Exposure Time Calculation tool
 Exec=CalGUI
 Icon=CalGUI
 Categories=Science;" > "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop
-
-try "Removing unneeded development files..." rm -Rfv "$DEPLOYROOT"/usr/include "$DEPLOYROOT"/usr/bin/suscan.status "$DEPLOYROOT"/usr/lib/pkgconfig
 
 embed_calculator_deps
 
