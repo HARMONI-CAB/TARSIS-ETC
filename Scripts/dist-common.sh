@@ -47,7 +47,7 @@ SRCDIR="${SCRIPTDIR}/.."
 DEPLOYROOT="$DISTROOT/deploy-root"
 BUILDROOT="$DISTROOT/build-root"
 
-if [ "$OSTYPE" == "Linux" ] || is_mingw; then
+if [ "$OSTYPE" == "Linux" ]; then
   THREADS=`cat /proc/cpuinfo | grep processor | wc -l`
 elif [ "$OSTYPE" == "Darwin" ]; then
   THREADS=`sysctl -n hw.ncpu`

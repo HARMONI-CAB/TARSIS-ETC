@@ -22,11 +22,9 @@
 
 . dist-common.sh
 
-export BUILDTYPE=Release
+BUNDLEID="es.inta-csic.cab.TARSISETC"
 
-BUNDLEID="org.actinid.SigDigger"
-
-BUNDLEPATH="$DEPLOYROOT/usr/bin/SigDigger.app"
+BUNDLEPATH="$DEPLOYROOT/usr/bundles/SigDigger.app"
 PLISTPATH="$BUNDLEPATH/Contents/Info.plist"
 RSRCPATH="$BUNDLEPATH/Contents/Resources"
 LIBPATH="$BUNDLEPATH/Contents/Frameworks"
