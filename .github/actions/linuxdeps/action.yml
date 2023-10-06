@@ -19,7 +19,7 @@ runs:
 
     - name: Install yaml-cpp
       shell:  ${{inputs.shell}}
-      run: sudo apt-get install libyaml-cpp-dev
+      run: sudo apt-get install yaml-cpp libyaml-cpp-dev
 
     - name: Download linuxdeployqt AppImage
       shell:  ${{inputs.shell}}
