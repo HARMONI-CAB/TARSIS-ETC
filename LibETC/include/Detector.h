@@ -22,6 +22,7 @@
 
 #include "ConfigManager.h"
 
+#define DETECTOR_PIXELS 2048
 
 class Spectrum;
 class Curve;

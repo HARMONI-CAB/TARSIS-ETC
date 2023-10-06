@@ -48,3 +48,4 @@ target_link_directories(
   ${YAMLCPP_LIBRARY_DIRS})
 
 target_link_libraries(ETC PRIVATE ${YAMLCPP_LIBRARIES})
+install(TARGETS ETC)

@@ -6,6 +6,10 @@
 #include "GUIHelpers.h"
 #include <QFileInfo>
 #include <QFileDialog>
+#include <ZoomableChartWidget.h>
+#include <RangeLimitedValueAxis.h>
+#include <QLineSeries>
+#include <QValueAxis>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
@@ -26,6 +30,37 @@ MainWindow::MainWindow(QWidget *parent)
   m_openFileDialog->setAcceptMode(QFileDialog::AcceptOpen);
   m_openFileDialog->setNameFilter(
         "2-column comma-separated values (*.csv);;All files (*)");
+
+  m_blueSNRWidget = new ZoomableChartWidget();
+
+  m_blueX         = new RangeLimitedValueAxis;
+  m_blueX->setTitleText("Pixel wavelength [nm]");
+  m_blueX->setRange(320, 520);
+  m_blueSNRWidget->chart()->addAxis(m_blueX, Qt::AlignBottom);
+
+  m_blueY         = new RangeLimitedValueAxis;
+  m_blueY->setRange(0, 32768);
+  m_blueY->setTitleText("Counts");
+  m_blueSNRWidget->chart()->addAxis(m_blueY, Qt::AlignLeft);
+
+  m_redSNRWidget  = new ZoomableChartWidget();
+  m_redX          = new RangeLimitedValueAxis;
+  m_redX->setRange(520, 820);
+  m_redX->setTitleText("Pixel wavelength [nm]");
+  m_redSNRWidget->chart()->addAxis(m_redX, Qt::AlignBottom);
+
+  m_redY          = new RangeLimitedValueAxis;
+  m_redY->setRange(0, 32768);
+  m_redY->setTitleText("Counts");
+  m_redSNRWidget->chart()->addAxis(m_redY, Qt::AlignLeft);
+
+  ui->tabWidget->addTab(
+        m_blueSNRWidget,
+        "Blue arm");
+
+  ui->tabWidget->addTab(
+        m_redSNRWidget,
+        "Red arm");
 
   connectAll();
 
@@ -125,6 +160,12 @@ MainWindow::connectAll()
         SIGNAL(runSimulation()),
         m_calcWorker,
         SLOT(simulate()));
+
+  connect(
+        m_calcWorker,
+        SIGNAL(dataProduct(CalculationProduct)),
+        this,
+        SLOT(onDataProduct(CalculationProduct)));
 
   connect(
         m_calcWorker,
@@ -264,5 +305,55 @@ MainWindow::onFileTextEdited()
     QFileInfo info(m_filePath);
 
     m_openFileDialog->setDirectory(info.dir());
+  }
+}
+
+void
+MainWindow::onDataProduct(CalculationProduct product)
+{
+  if (product.blueArm.initialized) {
+    double max = 1;
+    auto series = new QLineSeries;
+    series->setName("Signal at pixel");
+    series->setColor(QColor(0, 0, 255));
+
+    for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      if (product.blueArm.signal[i] > max)
+        max = product.blueArm.signal[i];
+
+      series->append(
+            1e9 * product.blueArm.wavelength[i],
+            product.blueArm.signal[i]);
+    }
+
+    m_blueY->setRange(0, max);
+
+    m_blueSNRWidget->chart()->removeAllSeries();
+    m_blueSNRWidget->chart()->addSeries(series);
+    series->attachAxis(m_blueX);
+    series->attachAxis(m_blueY);
+    m_blueSNRWidget->fitInView();
+  }
+
+  if (product.redArm.initialized) {
+    double max = 1;
+    auto series = new QLineSeries;
+    series->setName("Signal at pixel");
+    series->setColor(QColor(255, 0, 0));
+    for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      if (product.redArm.signal[i] > max)
+        max = product.redArm.signal[i];
+      series->append(
+            1e9 * product.redArm.wavelength[i],
+            product.redArm.signal[i]);
+    }
+
+    m_redY->setRange(0, max);
+
+    m_redSNRWidget->chart()->removeAllSeries();
+    m_redSNRWidget->chart()->addSeries(series);
+    series->attachAxis(m_redX);
+    series->attachAxis(m_redY);
+    m_redSNRWidget->fitInView();
   }
 }

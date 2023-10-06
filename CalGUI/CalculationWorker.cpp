@@ -26,6 +26,7 @@ CalculationWorker::CalculationWorker(QObject *parent) : QObject(parent)
 {
   if (!g_registered) {
     qRegisterMetaType<SimulationParams>();
+    qRegisterMetaType<CalculationProduct>();
     g_registered = true;
   }
 }
@@ -84,7 +85,7 @@ CalculationWorker::setParams(SimulationParams params)
 
   try {
     // AB magnitude changed, recalculate input spectrum
-    if (fabs(m_simParams.rABmag - params.rABmag) <= std::numeric_limits<double>::epsilon()) {
+    if (fabs(m_simParams.rABmag - params.rABmag) > std::numeric_limits<double>::epsilon()) {
       m_simulation->setInput(m_inputSpectrum);
       m_simulation->normalizeToRMag(m_simParams.rABmag);
     }
@@ -97,6 +98,13 @@ CalculationWorker::setParams(SimulationParams params)
   }
 }
 
+SNRCurve::SNRCurve()
+{
+  wavelength.resize(DETECTOR_PIXELS);
+  signal.resize(DETECTOR_PIXELS);
+  noise.resize(DETECTOR_PIXELS);
+}
+
 void
 CalculationWorker::simulate()
 {
@@ -106,7 +114,30 @@ CalculationWorker::simulate()
   }
 
   try {
+    CalculationProduct result;
+
+    m_simulation->simulateArm(BlueArm);
+
+    for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      result.blueArm.wavelength[i] = m_simulation->pxToWavelength(i);
+      result.blueArm.signal[i]     = m_simulation->signal(i);
+      result.blueArm.noise[i]      = m_simulation->noise(i);
+    }
+    result.blueArm.initialized = true;
+
+    if (m_simParams.detector == "ML15") {
+      m_simulation->simulateArm(RedArm);
+
+      for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+        result.redArm.wavelength[i] = m_simulation->pxToWavelength(i);
+        result.redArm.signal[i]     = m_simulation->signal(i);
+        result.redArm.noise[i]      = m_simulation->noise(i);
+      }
+      result.redArm.initialized = true;
+    }
+
     emit done("simulate");
+    emit dataProduct(result);
   } catch (std::runtime_error const &e) {
     emit exception(e.what());
   }

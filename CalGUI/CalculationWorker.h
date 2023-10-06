@@ -23,8 +23,25 @@
 #include <QObject>
 #include <QMetaType>
 #include <Simulation.h>
+#include <vector>
 
 Q_DECLARE_METATYPE(SimulationParams)
+
+struct SNRCurve {
+  bool                initialized = false;
+  std::vector<double> wavelength;
+  std::vector<double> signal;
+  std::vector<double> noise;
+
+  SNRCurve();
+};
+
+struct CalculationProduct {
+  SNRCurve redArm;
+  SNRCurve blueArm;
+};
+
+Q_DECLARE_METATYPE(CalculationProduct);
 
 class CalculationWorker : public QObject
 {
@@ -47,6 +64,7 @@ public slots:
 
 signals:
   void done(QString);
+  void dataProduct(CalculationProduct);
   void exception(QString);
 };
 

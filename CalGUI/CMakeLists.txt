@@ -22,6 +22,11 @@ set(PROJECT_SOURCES
         MainWindow.cpp
         MainWindow.h
         MainWindow.ui
+        RangeLimitedValueAxis.h RangeLimitedValueAxis.cpp
+        ZoomableChart.h ZoomableChart.cpp
+        ZoomableChartView.h ZoomableChartView.cpp
+        ZoomableChartWidget.h ZoomableChartWidget.cpp ZoomableChartWidget.ui
+        res/zoomable_chart_widget_resources.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -60,6 +65,8 @@ set_target_properties(CalGUI PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+install(TARGETS CalGUI)
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(CalGUI)

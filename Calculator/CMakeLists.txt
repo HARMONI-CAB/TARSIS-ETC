@@ -32,3 +32,5 @@ target_include_directories(
   ../LibETC/include
   ${CALCULATOR_INCLUDEDIR}
   ${YAMLCPP_INCLUDE_DIRS})
+
+install(TARGETS Calculator)
