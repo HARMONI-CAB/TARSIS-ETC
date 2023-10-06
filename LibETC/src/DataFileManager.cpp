@@ -78,7 +78,7 @@ DataFileManager::DataFileManager()
 #if defined(__APPLE__)
   const char *bundlePath = get_resource_bundle_path(CFSTR("TARSISETC"));
   if (bundlePath != nullptr)
-    addSearchPath(extraPath);
+    addSearchPath(bundlePath);
 #endif
 }
 
