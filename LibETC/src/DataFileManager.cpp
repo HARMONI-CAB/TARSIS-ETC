@@ -31,7 +31,11 @@ DataFileManager *DataFileManager::g_instance = nullptr;
 
 DataFileManager::DataFileManager()
 {
+  const char *extraPath = getenv("TARSIS_ETC_DATA_DIR");
+
   addSearchPath(std::filesystem::current_path().string());
+  if (extraPath != nullptr)
+    addSearchPath(extraPath);
 }
 
 DataFileManager *

@@ -88,7 +88,7 @@ echo "[Desktop Entry]
 Type=Application
 Name=TARSIS ETC
 Comment=TARSIS Exposure Time Calculation tool
-Exec=CalGUI
+Exec=TARSISETC
 Icon=TARSISETC
 Categories=Science;" > "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop
 
@@ -96,7 +96,6 @@ embed_calculator_deps
 
 try "Executing build fixups..." build_fixups
 try "Calling linuxdeployqt..." linuxdeployqt "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop -bundle-non-qt-libs
-#try "Moving SigDigger binary..." mv "$DEPLOYROOT"/usr/bin/SigDigger "$DEPLOYROOT"/usr/bin/SigDigger.app
-#try "Copying wrapper script..." cp "$DISTROOT"/AppRun "$DEPLOYROOT"/usr/bin/SigDigger
-#try "Setting permissions to wrapper script..." chmod a+x "$DEPLOYROOT"/usr/bin/SigDigger
+try "Copying wrapper script..." cp "$SCRIPTDIR"/AppRun "$DEPLOYROOT"/usr/bin/TARSISETC
+try "Setting permissions to wrapper script..." chmod a+x "$DEPLOYROOT"/usr/bin/TARSISETC
 try "Calling AppImageTool and finishing..." appimagetool "$DEPLOYROOT"
