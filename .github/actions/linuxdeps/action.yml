@@ -17,6 +17,7 @@ runs:
           py7zrversion: '==0.18.1'
       
     - name: Install yaml-cpp
+      shell:  ${{inputs.shell}}
       run: sudo apt-get install libyaml-cpp-dev
 
     - name: Download linuxdeployqt AppImage

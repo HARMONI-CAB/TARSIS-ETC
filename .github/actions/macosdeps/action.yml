@@ -17,7 +17,9 @@ runs:
         py7zrversion: '==0.18.1'
     
     - name: Install coreutils
+      shell:  ${{inputs.shell}}
       run: brew install coreutils
 
     - name: Install yaml-cpp
+      shell:  ${{inputs.shell}}
       run: brew install yaml-cpp
