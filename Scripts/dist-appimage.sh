@@ -80,6 +80,8 @@ update_excludelist
 build
 
 try "Creating appdir..."    mkdir -p "$DEPLOYROOT"/usr/share/applications
+try "Creating datadir..."   mkdir -p "$DEPLOYROOT"/usr/share/TARSIS
+try "Copying data..."       cp -Rfv "${SRCDIR}/data" "$DEPLOYROOT"/usr/share/TARSIS
 # try "Creating metainfo..."  mkdir -p "$DEPLOYROOT"/usr/share/metainfo
 # try "Copying metainfo..."   cp "$SCRIPTDIR/SigDigger.appdata.xml" "$DEPLOYROOT"/usr/share/metainfo/org.actinid.SigDigger.xml
 try "Creating icondir..."   mkdir -p "$DEPLOYROOT"/usr/share/icons/hicolor/256x256/apps
