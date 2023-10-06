@@ -15,7 +15,7 @@ runs:
           version: 6.2.0
           setup-python: false
           py7zrversion: '==0.18.1'
-          modules: qtcharts
+          modules: addons.qtcharts
 
     - name: Install yaml-cpp
       shell:  ${{inputs.shell}}
