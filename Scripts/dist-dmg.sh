@@ -89,8 +89,19 @@ function remove_full_paths()
   FULLPATH="$2"
   RPATHNAME='@executable_path/../Frameworks/'`basename "$FULLPATH"`
 
+  notice "  $1: $FULLPATH -> $RPATHNAME"
   install_name_tool -change "$FULLPATH" "$RPATHNAME" "$1"
 }
+
+function remove_rpath_framework()
+{
+  FULLPATH="$2"
+  RPATHNAME=`echo $FULLPATH | sed 's/@rpath\//@executable_path\/..\/Frameworks\//g'`
+
+  notice "  $1: $FULLPATH -> $RPATHNAME"
+  install_name_tool -change "$FULLPATH" "$RPATHNAME" "$1"
+}
+
 
 function remove_full_path_stdin () {
     while read line; do
@@ -98,14 +109,21 @@ function remove_full_path_stdin () {
   done
 }
 
+function remove_rpath_framework_stdin () {
+    while read line; do
+    remove_rpath_framework "$1" "$line"
+  done
+}
+
 function ensure_rpath()
 {
   for i in "$LIBPATH"/*.dylib "$BUNDLEPATH"/Contents/MacOS/*; do
       if ! [ -L "$i" ]; then
-	  chmod u+rw "$i"
-	  try "Fixing "`basename $i`"..." true
-	  otool -L "$i" | grep '\t/usr/local/' | tr -d '\t' | cut -f1 -d ' ' | remove_full_path_stdin "$i";
-	  otool -L "$i" | grep '\t@rpath/.*\.dylib' | tr -d '\t' | cut -f1 -d ' ' | remove_full_path_stdin "$i";
+        chmod u+rw "$i"
+        try "Fixing "`basename $i`"..." true
+        otool -L "$i" | grep '\t/usr/local/' | tr -d '\t' | cut -f1 -d ' ' | remove_full_path_stdin "$i";
+        otool -L "$i" | grep '\t@rpath/.*\.dylib' | tr -d '\t' | cut -f1 -d ' ' | remove_full_path_stdin "$i";
+        otool -L "$i" | grep '\t@rpath/.*\.framework/*' | tr -d '\t' | cut -f1 -d ' ' | remove_rpath_framework_stdin "$i";
       fi
   done
 }
