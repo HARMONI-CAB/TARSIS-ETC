@@ -48,4 +48,10 @@ target_link_directories(
   ${YAMLCPP_LIBRARY_DIRS})
 
 target_link_libraries(ETC PRIVATE ${YAMLCPP_LIBRARIES})
+
+if(APPLE)
+  # Required to retrieve bundle path
+  target_link_libraries(ETC "-framework CoreFoundation")
+endif()
+
 install(TARGETS ETC LIBRARY DESTINATION lib)
