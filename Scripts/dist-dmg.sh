@@ -81,7 +81,7 @@ function find_lib()
 function deploy_deps()
 {
   bundle_libs "yaml-cpp libraries" /usr/local/lib/libyaml-cpp*dylib
-  bundle_libs "GCC support libraries"   /usr/local/opt/gcc/lib/gcc/11/libgcc_s.1.1.dylib
+  bundle_libs "GCC support libraries"   /usr/local/opt/gcc/lib/gcc/*/libgcc_s*.dylib
 }
 
 function remove_full_paths()
