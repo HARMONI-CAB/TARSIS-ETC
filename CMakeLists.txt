@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.12.0)
 
 set(TARSIS_ETC_VERSION 0.1)
 

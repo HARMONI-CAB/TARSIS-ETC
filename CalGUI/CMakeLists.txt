@@ -66,7 +66,7 @@ set_target_properties(CalGUI PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-install(TARGETS CalGUI)
+install(TARGETS CalGUI RUNTIME DESTINATION bin)
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(CalGUI)

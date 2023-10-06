@@ -1,0 +1,23 @@
+name: Build
+description: 'Install macOS specific dependencies'
+
+inputs:
+  shell:
+    required: false
+    default: bash
+
+runs:
+  using: 'composite'
+  steps:    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: 6.4.2
+        setup-python: false
+        py7zrversion: '==0.18.1'
+    
+    - name: Install coreutils
+      run: brew install coreutils
+
+    - name: Install yaml-cpp
+      run: brew install yaml-cpp

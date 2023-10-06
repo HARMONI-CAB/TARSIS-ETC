@@ -1,0 +1,40 @@
+name: Build
+description: 'Install GNU/Linux specific dependencies'
+
+inputs:
+  shell:
+    required: false
+    default: bash
+
+runs:
+  using: 'composite'
+  steps:  
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+          version: 6.4.2
+          setup-python: false
+          py7zrversion: '==0.18.1'
+      
+    - name: Install yaml-cpp
+      run: sudo apt-get install libyaml-cpp-dev
+
+    - name: Download linuxdeployqt AppImage
+      shell:  ${{inputs.shell}}
+      run: wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+    
+    - name: Install linuxdeployqt system-wide
+      shell:  ${{inputs.shell}}
+      run: |
+        sudo mv linuxdeployqt-continuous-x86_64.AppImage /usr/bin/linuxdeployqt
+        sudo chmod a+x /usr/bin/linuxdeployqt
+
+    - name: Download appimagetool
+      shell:  ${{inputs.shell}}
+      run: wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+    
+    - name: Install appimagetool system-wide
+      shell:  ${{inputs.shell}}
+      run: |
+        sudo mv appimagetool-x86_64.AppImage /usr/bin/appimagetool
+        sudo chmod a+x /usr/bin/appimagetool

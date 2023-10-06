@@ -33,4 +33,4 @@ target_include_directories(
   ${CALCULATOR_INCLUDEDIR}
   ${YAMLCPP_INCLUDE_DIRS})
 
-install(TARGETS Calculator)
+install(TARGETS Calculator RUNTIME DESTINATION bin)
