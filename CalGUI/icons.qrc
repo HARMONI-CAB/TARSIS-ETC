@@ -3,5 +3,6 @@
         <file>icons/edit-clear.svg</file>
         <file>icons/media-playback-start.svg</file>
         <file>icons/text-x-install.svg</file>
+        <file>icons/TARSISETC.png</file>
     </qresource>
 </RCC>

@@ -87,14 +87,14 @@ build
 try "Creating appdir..."    mkdir -p "$DEPLOYROOT"/usr/share/applications
 # try "Creating metainfo..."  mkdir -p "$DEPLOYROOT"/usr/share/metainfo
 # try "Copying metainfo..."   cp "$SCRIPTDIR/SigDigger.appdata.xml" "$DEPLOYROOT"/usr/share/metainfo/org.actinid.SigDigger.xml
-#try "Creating icondir..."   mkdir -p "$DEPLOYROOT"/usr/share/icons/hicolor/256x256/apps
-
-# try "Copying icons..." cp "$BUILDROOT"/SigDigger/icons/SigDigger.png "$DEPLOYROOT"/usr/share/icons/hicolor/256x256/apps
+try "Creating icondir..."   mkdir -p "$DEPLOYROOT"/usr/share/icons/hicolor/256x256/apps
+ try "Copying icons..." cp "${SRCDIR}/CalGUI/icons/TARSISETC.png" "$DEPLOYROOT"/usr/share/icons/hicolor/256x256/apps
 echo "[Desktop Entry]
 Type=Application
 Name=TARSIS ETC
 Comment=TARSIS Exposure Time Calculation tool
 Exec=CalGUI
+Icon=TARSISETC
 Categories=Science;" > "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop
 
 embed_calculator_deps

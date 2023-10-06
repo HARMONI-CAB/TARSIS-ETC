@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>TARSIS: Exposure Time Calculator</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/icons/TARSISETC.png</normaloff>:/icons/icons/TARSISETC.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_4">
     <item row="0" column="0">
