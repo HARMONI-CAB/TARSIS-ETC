@@ -29,6 +29,44 @@
 
 DataFileManager *DataFileManager::g_instance = nullptr;
 
+#if defined(__APPLE__)
+#  include <CoreFoundation/CoreFoundation.h>
+
+static const char *
+get_resource_bundle_path(CFStringRef relpath)
+{
+  CFBundleRef main_bundle = NULL;
+  CFURLRef dir_url = NULL;
+  CFStringRef dir_path = NULL;
+  CFStringEncoding encmethod;
+  const char *path = NULL;
+
+  if ((main_bundle = CFBundleGetMainBundle()) != NULL) {
+    dir_url = CFBundleCopyResourceURL(
+                  main_bundle,
+                  relpath,
+                  NULL, /* resourceType */
+                  NULL /* dirName */);
+
+    /* Not an error */
+    if (dir_url == NULL)
+      goto done;
+
+    dir_path = CFURLCopyFileSystemPath(dir_url, kCFURLPOSIXPathStyle);
+    if (dir_path == nullptr)
+      goto done;
+
+    encmethod = CFStringGetSystemEncoding();
+    path = CFStringGetCStringPtr(dir_path, encmethod);
+  }
+
+done:
+  return path;
+}
+
+
+#endif
+
 DataFileManager::DataFileManager()
 {
   const char *extraPath = getenv("TARSIS_ETC_DATA_DIR");
@@ -36,6 +74,12 @@ DataFileManager::DataFileManager()
   addSearchPath(std::filesystem::current_path().string());
   if (extraPath != nullptr)
     addSearchPath(extraPath);
+
+#if defined(__APPLE__)
+  const char *bundlePath = get_resource_bundle_path(CFSTR("TARSISETC"));
+  if (bundlePath != nullptr)
+    addSearchPath(extraPath);
+#endif
 }
 
 DataFileManager *

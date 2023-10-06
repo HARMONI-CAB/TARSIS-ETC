@@ -151,8 +151,8 @@ function deploy()
   locate_macdeploy
 
   try "Deploying via macdeployqt..." macdeployqt "$BUNDLEPATH"
-  
-  try "Copyingdata directory to bundle..." cp -Rfv "$SRCDIR/data" "$RSRCPATH"
+  try "Creating TARSISETC resource path..." mkdir -p "$RSRCPATH/TARSISETC"
+  try "Copying data directory to bundle..." cp -Rfv "$SRCDIR/data" "$RSRCPATH/TARSISETC"
   try "Copying ETC cli tool to bundle..." cp -fv "$DEPLOYROOT/usr/bin/Calculator" "$BINPATH"
   try "Bundling built libraries..." cp -fv "$DEPLOYROOT/usr/lib/"*.dylib "$LIBPATH"
 
