@@ -112,6 +112,7 @@ function ensure_rpath()
 
 function create_dmg()
 {
+  ls -lR "${BUNDLEPATH}"
   try "Cleaning up old files..." rm -Rfv "$STAGINGDIR"
   try "Creating staging directory..." mkdir -p "$STAGINGDIR"
   try "Copying bundle to staging dir..."   cp -Rfv "$BUNDLEPATH" "$STAGINGDIR"
