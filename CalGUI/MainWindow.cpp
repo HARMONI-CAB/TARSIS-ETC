@@ -11,6 +11,20 @@
 #include <QLineSeries>
 #include <QValueAxis>
 
+// Thanks tab10
+static uint8_t plotPal[][3] = {
+  {0x1f, 0x77, 0xb4},
+  {0xff, 0x7f, 0x0e},
+  {0x2c, 0xa0, 0x2c},
+  {0xd6, 0x27, 0x28},
+  {0x94, 0x67, 0xbd},
+  {0x8c, 0x56, 0x4b},
+  {0xe7, 0x77, 0xc2},
+  {0x7f, 0x7f, 0x7f},
+  {0xbc, 0xbd, 0x22},
+  {0x17, 0xbe, 0xcf}
+};
+
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
@@ -192,6 +206,18 @@ MainWindow::connectAll()
         SLOT(onSimulate()));
 
   connect(
+        ui->actionSave_data_as,
+        SIGNAL(triggered(bool)),
+        this,
+        SLOT(onSaveProduct()));
+
+  connect(
+        ui->actionClear_plots,
+        SIGNAL(triggered(bool)),
+        this,
+        SLOT(onClearPlots()));
+
+  connect(
         ui->elevationSpinBox,
         SIGNAL(valueChanged(qreal)),
         this,
@@ -261,9 +287,22 @@ MainWindow::onSimulate()
     return;
   }
 
-  emit setSimulationParams(m_simParams);
   emit setInputSpectrum(m_filePath);
+  emit setSimulationParams(m_simParams);
   emit runSimulation();
+}
+
+void
+MainWindow::onClearPlots()
+{
+  m_blueSNRWidget->chart()->removeAllSeries();
+  m_redSNRWidget->chart()->removeAllSeries();
+}
+
+void
+MainWindow::onSaveProduct()
+{
+
 }
 
 void
@@ -311,11 +350,15 @@ MainWindow::onFileTextEdited()
 void
 MainWindow::onDataProduct(CalculationProduct product)
 {
+  unsigned curves =
+      static_cast<unsigned>(m_blueSNRWidget->chart()->series().size());
+  unsigned c = curves % (sizeof(plotPal) / sizeof(plotPal[0]));
+
   if (product.blueArm.initialized) {
     double max = 1;
     auto series = new QLineSeries;
-    series->setName("Signal at pixel");
-    series->setColor(QColor(0, 0, 255));
+    series->setName("Counts (run #" + QString::number(curves + 1) + ")");
+    series->setColor(QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]));
 
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
       if (product.blueArm.signal[i] > max)
@@ -328,7 +371,7 @@ MainWindow::onDataProduct(CalculationProduct product)
 
     m_blueY->setRange(0, max);
 
-    m_blueSNRWidget->chart()->removeAllSeries();
+
     m_blueSNRWidget->chart()->addSeries(series);
     series->attachAxis(m_blueX);
     series->attachAxis(m_blueY);
@@ -338,8 +381,8 @@ MainWindow::onDataProduct(CalculationProduct product)
   if (product.redArm.initialized) {
     double max = 1;
     auto series = new QLineSeries;
-    series->setName("Signal at pixel");
-    series->setColor(QColor(255, 0, 0));
+    series->setName("Counts (run #" + QString::number(curves + 1) + ")");
+    series->setColor(QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]));
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
       if (product.redArm.signal[i] > max)
         max = product.redArm.signal[i];
@@ -350,7 +393,6 @@ MainWindow::onDataProduct(CalculationProduct product)
 
     m_redY->setRange(0, max);
 
-    m_redSNRWidget->chart()->removeAllSeries();
     m_redSNRWidget->chart()->addSeries(series);
     series->attachAxis(m_redX);
     series->attachAxis(m_redY);

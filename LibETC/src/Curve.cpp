@@ -593,3 +593,11 @@ Curve::save(std::string const &path) const
 
   fclose(fp);
 }
+
+void
+Curve::debug()
+{
+  for (auto p : m_curve)
+    printf("%g=%g, ", p.first, p.second);
+  putchar(10);
+}

@@ -20,6 +20,9 @@ class MainWindow : public QMainWindow
   CalculationWorker   *m_calcWorker = nullptr;
   QThread             *m_workerThread = nullptr;
 
+  CalculationProduct   m_lastProduct;
+  bool                 m_haveProducts = false;
+
   ZoomableChartWidget *m_blueSNRWidget = nullptr;
   QValueAxis          *m_blueX = nullptr;
   QValueAxis          *m_blueY = nullptr;
@@ -35,6 +38,7 @@ class MainWindow : public QMainWindow
   void                connectAll();
   bool                parse();
   void                refreshUi();
+
 
 public:
   MainWindow(QWidget *parent = nullptr);
@@ -56,6 +60,8 @@ public slots:
 
   void onBrowseFile();
   void onSimulate();
+  void onSaveProduct();
+  void onClearPlots();
 
   void onElevationChanged();
   void onAirMassChanged();
@@ -64,5 +70,6 @@ public slots:
   void onMoonSliderChanged();
 
   void onFileTextEdited();
+
 };
 #endif // MAINWINDOW_H

@@ -49,7 +49,7 @@ class CalculationWorker : public QObject
 
   Simulation *m_simulation = nullptr;
   SimulationParams m_simParams;
-
+  bool      m_newSpectrum = false;
   Spectrum m_inputSpectrum;
 
 public:

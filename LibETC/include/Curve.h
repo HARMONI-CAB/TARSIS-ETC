@@ -114,6 +114,8 @@ class Curve {
 
     void load(std::string const &, bool transpose = false, unsigned xCol = 0, unsigned yCol = 1);
     void save(std::string const &) const;
+
+    void debug();
 };
 
 #endif // _ETC_CURVE_H

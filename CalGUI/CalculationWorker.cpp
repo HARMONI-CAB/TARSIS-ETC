@@ -65,9 +65,7 @@ CalculationWorker::setInputSpectrum(QString path)
     newSpectrum.scaleAxis(XAxis, 1e-9);
 
     m_inputSpectrum = newSpectrum;
-
-    m_simulation->setInput(m_inputSpectrum);
-    m_simulation->normalizeToRMag(m_simParams.rABmag);
+    m_newSpectrum   = true;
 
     emit done("setInputSpectrum");
   } catch (std::runtime_error const &e) {
@@ -85,9 +83,11 @@ CalculationWorker::setParams(SimulationParams params)
 
   try {
     // AB magnitude changed, recalculate input spectrum
-    if (fabs(m_simParams.rABmag - params.rABmag) > std::numeric_limits<double>::epsilon()) {
+    if (m_newSpectrum ||
+        fabs(m_simParams.rABmag - params.rABmag) > std::numeric_limits<double>::epsilon()) {
       m_simulation->setInput(m_inputSpectrum);
-      m_simulation->normalizeToRMag(m_simParams.rABmag);
+      m_simulation->normalizeToRMag(params.rABmag);
+      m_newSpectrum = false;
     }
 
     m_simParams = params;

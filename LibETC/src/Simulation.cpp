@@ -80,11 +80,14 @@ Simulation::normalizeToRMag(double R)
   // Input is assumed to be in W / (m^2 sr m)
   filtered.fromExisting(m_input);
 
-  // Now it is in W / (m^2 sr Hz)
+  // Turn into W / (m^2 sr Hz)
   filtered.invertAxis(XAxis, SPEED_OF_LIGHT);
+
+  // Filter (still in W / (m^2 sr Hz))
   filtered.multiplyBy(m_cousinsR);
 
-  // Again, W / (m^2 sr m). But this time, normalized by the R transfer.
+  // Integrate the spectrum axis. Units are W / (m^2 sr). Dividing by 
+  // the equivalent bandwidth gives a mean spectral surface brightness
   meanSB = filtered.integral() / m_cousinsREquivBw;
 
   // And normalize
