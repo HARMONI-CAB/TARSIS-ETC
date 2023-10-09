@@ -60,6 +60,7 @@ class Simulation {
     double signal(unsigned px) const;
     double noise(unsigned px) const;
     double pxToWavelength(unsigned px) const;
+    Curve const &wlToPixelCurve() const;
 };
 
 #endif // _ETC_SIMULATION_H

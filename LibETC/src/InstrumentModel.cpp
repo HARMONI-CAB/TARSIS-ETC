@@ -226,7 +226,7 @@ InstrumentModel::pxToWavelength(
 Curve *
 InstrumentModel::pxToWavelength(unsigned slice) const
 {
-if (slice >= TARSIS_SLICES)
+  if (slice >= TARSIS_SLICES)
     throw std::runtime_error("Slice " + std::to_string(slice + 1) + " out of bounds");
 
   switch (m_currentPath) {
@@ -258,6 +258,23 @@ InstrumentModel::wavelengthToPx(
   }
 
   return -1;
+}
+
+Curve *
+InstrumentModel::wavelengthToPx(unsigned slice) const
+{
+  if (slice >= TARSIS_SLICES)
+    throw std::runtime_error("Slice " + std::to_string(slice + 1) + " out of bounds");
+
+  switch (m_currentPath) {
+    case BlueArm:
+      return m_blueW2Px[slice];
+
+    case RedArm:
+      return m_redW2Px[slice];
+  }
+
+  return nullptr;
 }
 
 // Applies the spectrum. The input spectrum must be in radiance units,

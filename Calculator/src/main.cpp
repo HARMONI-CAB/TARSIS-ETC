@@ -51,31 +51,31 @@ runSimulation(SimulationParams const &params, std::string const &path)
     sim->setParams(params);
     sim->simulateArm(BlueArm);
     
-    for (auto i = 0; i < 2048; ++i)
+    for (auto i = 0; i < DETECTOR_PIXELS; ++i)
       printf("%s%g", i > 0 ? "," : "", sim->pxToWavelength(i));
     putchar('\n');
 
-    for (auto i = 0; i < 2048; ++i)
+    for (auto i = 0; i < DETECTOR_PIXELS; ++i)
       printf("%s%g", i > 0 ? "," : "", sim->signal(i));
     putchar('\n');
 
-    for (auto i = 0; i < 2048; ++i)
+    for (auto i = 0; i < DETECTOR_PIXELS; ++i)
       printf("%s%g", i > 0 ? "," : "", sim->noise(i));
     putchar('\n');
 
     if (params.detector == "ML15") {
       sim->simulateArm(RedArm);
 
-      for (auto i = 0; i < 2048; ++i)
+      for (auto i = 0; i < DETECTOR_PIXELS; ++i)
         printf("%s%g", i > 0 ? "," : "", sim->pxToWavelength(i));
       putchar('\n');
 
-      for (auto i = 0; i < 2048; ++i)
+      for (auto i = 0; i < DETECTOR_PIXELS; ++i)
         printf("%s%g", i > 0 ? "," : "", sim->signal(i));
       putchar('\n');
 
 
-      for (auto i = 0; i < 2048; ++i)
+      for (auto i = 0; i < DETECTOR_PIXELS; ++i)
         printf("%s%g", i > 0 ? "," : "", sim->noise(i));
       putchar('\n');
     }

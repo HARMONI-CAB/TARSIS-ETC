@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <Simulation.h>
 #include <CalculationWorker.h>
+#include <list>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,9 +20,11 @@ class MainWindow : public QMainWindow
 
   CalculationWorker   *m_calcWorker = nullptr;
   QThread             *m_workerThread = nullptr;
+  bool                 m_haveClickedPoint = false;
+  QPointF              m_clickedPoint;
 
-  CalculationProduct   m_lastProduct;
-  bool                 m_haveProducts = false;
+  std::list<CalculationProduct>
+                       m_lastProducts;
 
   ZoomableChartWidget *m_blueSNRWidget = nullptr;
   QValueAxis          *m_blueX = nullptr;
@@ -34,11 +37,14 @@ class MainWindow : public QMainWindow
   SimulationParams    m_simParams;
   QString             m_filePath;
   QFileDialog        *m_openFileDialog = nullptr;
+  QFileDialog        *m_saveFileDialog = nullptr;
   void                refreshUiState();
   void                connectAll();
   bool                parse();
   void                refreshUi();
-
+  void                resetMeasurements();
+  void                refreshMeasurements();
+  bool                saveDataProduct(std::string const &);
 
 public:
   MainWindow(QWidget *parent = nullptr);
@@ -62,6 +68,7 @@ public slots:
   void onSimulate();
   void onSaveProduct();
   void onClearPlots();
+  void onPlotPointClicked(QPointF);
 
   void onElevationChanged();
   void onAirMassChanged();

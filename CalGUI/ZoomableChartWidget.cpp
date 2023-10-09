@@ -1,6 +1,7 @@
 #include "ZoomableChartWidget.h"
 #include "ui_ZoomableChartWidget.h"
 
+#include <QScatterSeries>
 #include <QtCharts/QLegendMarker>
 #include <QDebug>
 
@@ -83,6 +84,7 @@ void ZoomableChartWidget::legendMarkerClicked()
 
 void ZoomableChartWidget::legendMarkerHovered(bool hover)
 {
+  QPen pen;
   auto* marker = qobject_cast<QLegendMarker*>(sender());
   Q_ASSERT(marker);
 
@@ -90,11 +92,21 @@ void ZoomableChartWidget::legendMarkerHovered(bool hover)
   font.setBold(hover);
   marker->setFont(font);
 
-  if (marker->series()->type() == QAbstractSeries::SeriesTypeLine) {
-    auto series = qobject_cast<QLineSeries*>(marker->series());
-    auto pen = series->pen();
-    pen.setWidth(hover ? (pen.width() * 2) : (pen.width() / 2));
-    series->setPen(pen);
+  switch (marker->series()->type()) {
+    case QAbstractSeries::SeriesTypeLine:
+      pen = qobject_cast<QLineSeries*>(marker->series())->pen();
+      pen.setWidth(hover ? (pen.width() * 2) : (pen.width() / 2));
+      qobject_cast<QLineSeries*>(marker->series())->setPen(pen);
+      break;
+
+    case QAbstractSeries::SeriesTypeScatter:
+      pen = qobject_cast<QLineSeries*>(marker->series())->pen();
+      pen.setWidth(hover ? (pen.width() * 2) : (pen.width() / 2));
+      qobject_cast<QLineSeries*>(marker->series())->setPen(pen);
+      break;
+
+    default:
+      return;
   }
 }
 
@@ -106,6 +118,25 @@ ZoomableChart *ZoomableChartWidget::chart() const
 ZoomableChartView *ZoomableChartWidget::chartView() const
 {
   return ui->chartView;
+}
+
+static inline bool
+attemptGetPoints(QAbstractSeries const *series, QList<QPointF> &points)
+{
+  switch (series->type()) {
+    case QAbstractSeries::SeriesTypeLine:
+      points = static_cast<const QLineSeries *>(series)->points();
+      break;
+
+    case QAbstractSeries::SeriesTypeScatter:
+      points = static_cast<const QScatterSeries *>(series)->points();
+      break;
+
+    default:
+      return false;
+  }
+
+  return true;
 }
 
 void
@@ -120,8 +151,8 @@ ZoomableChartWidget::fitInView()
 
     // loop on all series attached to the axes and look for each min max point
     for (auto *series : m_chart->series()) {
-      // at the moment only QLineSeries is supported for zoom to fit
-      if (series->type() != QAbstractSeries::SeriesTypeLine)
+      QList<QPointF> points;
+      if (!attemptGetPoints(series, points))
         continue;
 
       if (!xmin.contains(axis))
@@ -135,8 +166,7 @@ ZoomableChartWidget::fitInView()
 
       for (const auto *attachedAxis : series->attachedAxes()) {
         if (series->isVisible() && attachedAxis == axis) {
-          auto lineSeries = static_cast<const QLineSeries*>(series);
-          for (const auto pt : lineSeries->points()) {
+          for (const auto pt : points) {
             if (pt.x() < xmin[axis])
               xmin[axis] = pt.x();
             if (pt.x() > xmax[axis])
@@ -154,7 +184,7 @@ ZoomableChartWidget::fitInView()
 
   for (QAbstractAxis *axis : m_chart->axes()) {
     if (axis->type() != QAbstractAxis::AxisTypeValue)
-      continue;;
+      continue;
 
     if (axis->alignment() == Qt::AlignBottom) {
       if (xmin.contains(axis))

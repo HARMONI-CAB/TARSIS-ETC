@@ -88,7 +88,7 @@ class InstrumentModel {
     Curve *pxToWavelength(unsigned slice) const;
 
     int    wavelengthToPx(InstrumentArm arm, unsigned slice, double lambda) const;
-
+    Curve *wavelengthToPx(unsigned slice) const;
 
     // Set input spectrum. The input spectrum must be in radiance units,
     // with a *wavelength* spectral axis* i.e. J / (s * m^2 * sr * m)

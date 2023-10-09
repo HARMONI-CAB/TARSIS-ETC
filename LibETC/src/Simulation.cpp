@@ -155,3 +155,9 @@ Simulation::pxToWavelength(unsigned px) const
 {
   return (*m_tarsisModel->pxToWavelength(m_params.slice))(px);
 }
+
+Curve const &
+Simulation::wlToPixelCurve() const
+{
+  return (*m_tarsisModel->wavelengthToPx(m_params.slice));
+}

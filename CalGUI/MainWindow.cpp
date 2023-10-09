@@ -9,6 +9,7 @@
 #include <ZoomableChartWidget.h>
 #include <RangeLimitedValueAxis.h>
 #include <QLineSeries>
+#include <QScatterSeries>
 #include <QValueAxis>
 
 // Thanks tab10
@@ -45,6 +46,15 @@ MainWindow::MainWindow(QWidget *parent)
   m_openFileDialog->setNameFilter(
         "2-column comma-separated values (*.csv);;All files (*)");
 
+  m_saveFileDialog = new QFileDialog(this);
+
+  m_saveFileDialog->setWindowTitle("Save simulation products");
+  m_saveFileDialog->setFileMode(QFileDialog::AnyFile);
+  m_saveFileDialog->setAcceptMode(QFileDialog::AcceptSave);
+  m_saveFileDialog->setNameFilter(
+        "2-column comma-separated values (*.csv);;All files (*)");
+
+
   m_blueSNRWidget = new ZoomableChartWidget();
 
   m_blueX         = new RangeLimitedValueAxis;
@@ -79,6 +89,8 @@ MainWindow::MainWindow(QWidget *parent)
   connectAll();
 
   refreshUi();
+  refreshMeasurements();
+  ui->actionSave_data_as->setEnabled(false);
 
   emit initWorker();
 }
@@ -146,6 +158,69 @@ void
 MainWindow::refreshUiState()
 {
   ui->sliceSpinBox->setEnabled(!ui->averageSpinBox->isChecked());
+}
+
+void
+MainWindow::resetMeasurements()
+{
+  ui->wlLabel->setText("N/A");
+  ui->countsLabel->setText("N/A");
+  ui->allSeriesLabel->setText("");
+}
+
+void
+MainWindow::refreshMeasurements()
+{
+  if (!m_haveClickedPoint || m_lastProducts.empty()) {
+    resetMeasurements();
+    return;
+  }
+
+  qreal wl = m_clickedPoint.x();
+  qreal counts = m_clickedPoint.y();
+
+  ui->wlLabel->setText(asScientific(wl) + " nm");
+  ui->countsLabel->setText(asScientific(counts));
+  ui->allSeriesLabel->setText("");
+  unsigned i = 1;
+
+  for (auto &p : m_lastProducts) {
+    if (wl >= 320. && wl < 550) {
+      qreal pxBlue = p.blueArm.wlToPixel(wl * 1e-9);
+      int pixel = static_cast<int>(std::round(pxBlue));
+      if (pixel >= 0 && pixel < DETECTOR_PIXELS) {
+        size_t ndx = static_cast<size_t>(pixel);
+        if (p.blueArm.signal[ndx] > 0 || p.blueArm.noise[ndx] > 0) {
+          QString line = QString::asprintf(
+                "Run #%-2d [blue]: S = %g, N = %g (%g SNR)\n", i,
+                p.blueArm.signal[ndx],
+                p.blueArm.noise[ndx],
+                p.blueArm.signal[ndx] / p.blueArm.noise[ndx]);
+
+          ui->allSeriesLabel->setText(ui->allSeriesLabel->text() + line);
+        }
+      }
+    }
+
+    if (wl >= 520 && wl < 820) {
+      qreal pxRed = p.redArm.wlToPixel(wl * 1e-9);
+      int pixel = static_cast<int>(std::round(pxRed));
+      if (pixel >= 0 && pixel < DETECTOR_PIXELS) {
+        size_t ndx = static_cast<size_t>(pixel);
+        if (p.redArm.signal[ndx] > 0 || p.redArm.noise[ndx] > 0) {
+          QString line = QString::asprintf(
+                "Run #%-2d [red ]: S = %g / N = %g (%g SNR)\n", i,
+                p.redArm.signal[ndx],
+                p.redArm.noise[ndx],
+                p.redArm.signal[ndx] / p.redArm.noise[ndx]);
+
+          ui->allSeriesLabel->setText(ui->allSeriesLabel->text() + line);
+        }
+      }
+    }
+
+    ++i;
+  }
 }
 
 void
@@ -246,6 +321,19 @@ MainWindow::connectAll()
         SIGNAL(textEdited(QString)),
         this,
         SLOT(onFileTextEdited()));
+
+  connect(
+        m_blueSNRWidget->chartView(),
+        SIGNAL(pairPressed(QPointF)),
+        this,
+        SLOT(onPlotPointClicked(QPointF)));
+
+  connect(
+        m_redSNRWidget->chartView(),
+        SIGNAL(pairPressed(QPointF)),
+        this,
+        SLOT(onPlotPointClicked(QPointF)));
+
 }
 
 void
@@ -297,12 +385,69 @@ MainWindow::onClearPlots()
 {
   m_blueSNRWidget->chart()->removeAllSeries();
   m_redSNRWidget->chart()->removeAllSeries();
+  m_haveClickedPoint = false;
+  ui->actionSave_data_as->setEnabled(false);
+  refreshMeasurements();
+}
+
+bool
+MainWindow::saveDataProduct(std::string const &path)
+{
+  bool ok = false;
+  FILE *fp = fopen(path.c_str(), "wb");
+
+  if (fp == nullptr)
+    goto done;
+
+  for (auto &p : m_lastProducts) {
+    for (auto i = 0u; i < DETECTOR_PIXELS; ++i)
+      fprintf(fp, "%s%g", i > 0 ? "," : "", p.blueArm.wavelength[i]);
+    fputc('\n', fp);
+
+    for (auto i = 0u; i < DETECTOR_PIXELS; ++i)
+      fprintf(fp, "%s%g", i > 0 ? "," : "", p.blueArm.signal[i]);
+    fputc('\n', fp);
+
+    for (auto i = 0u; i < DETECTOR_PIXELS; ++i)
+      fprintf(fp, "%s%g", i > 0 ? "," : "", p.blueArm.noise[i]);
+    fputc('\n', fp);
+
+    for (auto i = 0u; i < DETECTOR_PIXELS; ++i)
+      fprintf(fp, "%s%g", i > 0 ? "," : "", p.redArm.wavelength[i]);
+    fputc('\n', fp);
+
+    for (auto i = 0u; i < DETECTOR_PIXELS; ++i)
+      fprintf(fp, "%s%g", i > 0 ? "," : "", p.redArm.signal[i]);
+    fputc('\n', fp);
+
+    for (auto i = 0u; i < DETECTOR_PIXELS; ++i)
+      fprintf(fp, "%s%g", i > 0 ? "," : "", p.redArm.noise[i]);
+    fputc('\n', fp);
+  }
+
+  ok = true;
+
+done:
+  if (fp != nullptr)
+    fclose(fp);
+
+  return ok;
 }
 
 void
 MainWindow::onSaveProduct()
 {
-
+  if (m_saveFileDialog->exec()
+      && !m_saveFileDialog->selectedFiles().empty()) {
+    QString path = m_saveFileDialog->selectedFiles()[0];
+    if (!saveDataProduct(path.toStdString())) {
+      QString error = strerror(errno);
+      QMessageBox::critical(
+            this,
+            "Cannot save data products",
+            "Cannot save data products in the specified location: " + error);
+    }
+  }
 }
 
 void
@@ -353,12 +498,16 @@ MainWindow::onDataProduct(CalculationProduct product)
   unsigned curves =
       static_cast<unsigned>(m_blueSNRWidget->chart()->series().size());
   unsigned c = curves % (sizeof(plotPal) / sizeof(plotPal[0]));
-
+  QColor color = QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]);
   if (product.blueArm.initialized) {
     double max = 1;
-    auto series = new QLineSeries;
+    auto series = new QScatterSeries;
+
     series->setName("Counts (run #" + QString::number(curves + 1) + ")");
-    series->setColor(QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]));
+    series->setColor(color);
+    series->setBorderColor(color);
+    series->setMarkerShape(QScatterSeries::MarkerShapeRectangle);
+    series->setMarkerSize(2);
 
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
       if (product.blueArm.signal[i] > max)
@@ -380,9 +529,13 @@ MainWindow::onDataProduct(CalculationProduct product)
 
   if (product.redArm.initialized) {
     double max = 1;
-    auto series = new QLineSeries;
+    auto series = new QScatterSeries;
     series->setName("Counts (run #" + QString::number(curves + 1) + ")");
-    series->setColor(QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]));
+    series->setColor(color);
+    series->setBorderColor(color);
+    series->setMarkerShape(QScatterSeries::MarkerShapeRectangle);
+    series->setMarkerSize(2);
+
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
       if (product.redArm.signal[i] > max)
         max = product.redArm.signal[i];
@@ -398,4 +551,16 @@ MainWindow::onDataProduct(CalculationProduct product)
     series->attachAxis(m_redY);
     m_redSNRWidget->fitInView();
   }
+
+  m_lastProducts.push_back(product);
+  ui->actionSave_data_as->setEnabled(true);
+  refreshMeasurements();
+}
+
+void
+MainWindow::onPlotPointClicked(QPointF p)
+{
+  m_clickedPoint = p;
+  m_haveClickedPoint = true;
+  refreshMeasurements();
 }

@@ -120,6 +120,7 @@ CalculationWorker::simulate()
 
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
       result.blueArm.wavelength[i] = m_simulation->pxToWavelength(i);
+      result.blueArm.wlToPixel     = m_simulation->wlToPixelCurve();
       result.blueArm.signal[i]     = m_simulation->signal(i);
       result.blueArm.noise[i]      = m_simulation->noise(i);
     }
@@ -130,6 +131,7 @@ CalculationWorker::simulate()
 
       for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
         result.redArm.wavelength[i] = m_simulation->pxToWavelength(i);
+        result.redArm.wlToPixel     = m_simulation->wlToPixelCurve();
         result.redArm.signal[i]     = m_simulation->signal(i);
         result.redArm.noise[i]      = m_simulation->noise(i);
       }

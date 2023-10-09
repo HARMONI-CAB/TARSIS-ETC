@@ -12,6 +12,8 @@ QT_CHARTS_USE_NAMESPACE
 class ZoomableChartView : public QChartView
         //![1]
 {
+  Q_OBJECT
+
 public:
     enum ZoomMode {
         Pan,
@@ -32,6 +34,8 @@ public:
     ZoomMode zoomMode() const;
     void setZoomMode(const ZoomMode &zoomMode);
 
+signals:
+    void pairPressed(QPointF);
 
 protected:
     void mousePressEvent(QMouseEvent *event);

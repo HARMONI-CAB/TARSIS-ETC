@@ -20,8 +20,9 @@ void ZoomableChartView::mousePressEvent(QMouseEvent *event)
 {
   m_isTouching = true;
   m_lastMousePos = event->localPos();
-  qWarning() << "Press" << m_lastMousePos;
+  auto scenePoint = chart()->mapToValue(m_lastMousePos);
   QChartView::mousePressEvent(event);
+  emit pairPressed(scenePoint);
 }
 
 void ZoomableChartView::mouseMoveEvent(QMouseEvent *event)
