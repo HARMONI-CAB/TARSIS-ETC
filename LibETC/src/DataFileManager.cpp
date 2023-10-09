@@ -166,3 +166,10 @@ DataFileManager::suggest(std::string const &path)
 {
   return find(path, W_OK);
 }
+
+std::list<std::string> const &
+DataFileManager::searchPaths() const
+{
+  return m_paths;
+}
+

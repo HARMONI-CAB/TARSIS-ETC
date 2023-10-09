@@ -11,6 +11,7 @@
 #include <QLineSeries>
 #include <QScatterSeries>
 #include <QValueAxis>
+#include <DataFileManager.h>
 
 // Thanks tab10
 static uint8_t plotPal[][3] = {
@@ -91,6 +92,13 @@ MainWindow::MainWindow(QWidget *parent)
   refreshUi();
   refreshMeasurements();
   ui->actionSave_data_as->setEnabled(false);
+
+  std::string message = "";
+
+  for (auto p : DataFileManager::instance()->searchPaths())
+    message += p + "\n";
+
+  QMessageBox::information(this, "A ver", "A ver bro:\n\n" + QString::fromStdString(message));
 
   emit initWorker();
 }

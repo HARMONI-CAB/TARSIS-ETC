@@ -38,6 +38,7 @@ class DataFileManager {
     
     std::string resolve(std::string const &);
     std::string suggest(std::string const &);
+    std::list<std::string> const &searchPaths() const;
 };
 
 static inline std::string
