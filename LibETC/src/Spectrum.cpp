@@ -27,8 +27,14 @@ Spectrum::scaleAxis(CurveAxis axis, double factor)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
 
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
-      xp.push_back(m_curve.extract(it));
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
+      xp.push_back(std::move(m_curve.extract(it)));
+      it = next;
+    }
     
     for (auto &p : xp) {
       p.key()    *= factor;
@@ -49,9 +55,15 @@ Spectrum::scaleAxis(CurveAxis axis, Curve const &curve)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
     
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
-      xp.push_back(m_curve.extract(it));
-    
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
+      xp.push_back(std::move(m_curve.extract(it)));
+      it = next;
+    }
+
     //
     // fz(g(x)) = fx(x) / g'(x), this is:
     // p.key()     = curve(x)
@@ -86,8 +98,14 @@ Spectrum::scaleAxis(CurveAxis axis, Curve const &curve, Curve const &diff)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
     
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
-      xp.push_back(m_curve.extract(it));
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
+      xp.push_back(std::move(m_curve.extract(it)));
+      it = next;
+    }
     
     //
     // fz(g(x)) = fx(x) / g'(x), this is:
@@ -126,9 +144,15 @@ Spectrum::invertAxis(CurveAxis axis, double factor)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
 
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
       xp.push_back(std::move(m_curve.extract(it)));
-    
+      it = next;
+    }
+
     if (xp.front().key() < 0)
       throw std::runtime_error("Inverting spectrums with negative values in the X axis not yet supported");
 

@@ -211,8 +211,14 @@ Curve::flip()
 
   std::list<std::map<double, double>::node_type> xp;
 
-  for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
+  auto it = m_curve.cbegin();
+  auto next = std::next(it);
+
+  while (it != m_curve.end()) {
+    next = std::next(it);
     xp.push_back(std::move(m_curve.extract(it)));
+    it = next;
+  }
   
   for (auto &p : xp) {
     double tmp = p.key();
@@ -246,9 +252,15 @@ Curve::scaleAxis(CurveAxis axis, double factor)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
 
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
       xp.push_back(std::move(m_curve.extract(it)));
-    
+      it = next;
+    }
+
     for (auto &p : xp) {
       p.key() *= factor;
       m_curve.insert(std::move(p));
@@ -269,8 +281,14 @@ Curve::scaleAxis(CurveAxis axis, Curve const &curve)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
 
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
-      xp.push_back(m_curve.extract(it));
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
+      xp.push_back(std::move(m_curve.extract(it)));
+      it = next;
+    }
     
     for (auto &p : xp) {
       p.key() = curve(p.key());
@@ -291,8 +309,14 @@ Curve::invertAxis(CurveAxis axis, double factor)
   if (axis == XAxis) {
     std::list<std::map<double, double>::node_type> xp;
 
-    for (auto it = m_curve.cbegin(); it != m_curve.cend(); ++it)
-      xp.push_back(m_curve.extract(it));
+    auto it = m_curve.cbegin();
+    auto next = std::next(it);
+
+    while (it != m_curve.end()) {
+      next = std::next(it);
+      xp.push_back(std::move(m_curve.extract(it)));
+      it = next;
+    }
     
     for (auto &p : xp) {
       p.key() = factor / p.key();
