@@ -129,8 +129,12 @@ ConfigManager::ConfigManager()
   struct stat sbuf;
 
   m_configDir = DataFileManager::instance()->suggest("config");
-  if (m_configDir.empty())
-    throw std::runtime_error("No config directory location available");
+  if (m_configDir.empty()) {
+    fprintf(stderr, "warning: no writable config directory available, using RO location\n");
+    m_configDir = DataFileManager::instance()->resolve("config");
+    if (m_configDir.empty())
+      throw std::runtime_error("No default config directory available.");
+  }
 
   if (stat(m_configDir.c_str(), &sbuf) == -1) {
     if (errno == ENOENT) {

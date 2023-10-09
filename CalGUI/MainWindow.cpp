@@ -93,13 +93,6 @@ MainWindow::MainWindow(QWidget *parent)
   refreshMeasurements();
   ui->actionSave_data_as->setEnabled(false);
 
-  std::string message = "";
-
-  for (auto p : DataFileManager::instance()->searchPaths())
-    message += p + "\n";
-
-  QMessageBox::information(this, "A ver", "A ver bro:\n\n" + QString::fromStdString(message));
-
   emit initWorker();
 }
 
