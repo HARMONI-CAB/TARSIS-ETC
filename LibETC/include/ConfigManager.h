@@ -26,6 +26,8 @@
 #include <map>
 #include <yaml-cpp/yaml.h>
 
+#define CONFIG_MANAGER_DIRECTORY "config"
+
 class Config {
     std::string m_objectName;
     YAML::Node  m_yamlConfig;
@@ -85,6 +87,7 @@ class ConfigManager {
     std::string                      m_configDir;
     std::list<Config *>              m_configList;
     std::map<std::string, Config *>  m_configCache;
+    bool                             m_canSaveConfig = false;
 
     ConfigManager();
 

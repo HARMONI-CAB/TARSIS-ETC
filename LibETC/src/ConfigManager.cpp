@@ -128,25 +128,34 @@ ConfigManager::ConfigManager()
 {
   struct stat sbuf;
 
-  m_configDir = DataFileManager::instance()->suggest("config");
-  if (m_configDir.empty()) {
-    fprintf(stderr, "warning: no writable config directory available, using RO location\n");
-    m_configDir = DataFileManager::instance()->resolve("config");
-    if (m_configDir.empty())
-      throw std::runtime_error("No default config directory available.");
+  m_configDir = DataFileManager::instance()->suggest(CONFIG_MANAGER_DIRECTORY);
+  if (!m_configDir.empty()) {
+    try {
+      if (stat(m_configDir.c_str(), &sbuf) == -1) {
+        if (errno == ENOENT) {
+          if (mkdir(m_configDir.c_str(), 0700) == -1)
+            throw std::runtime_error("Failed to create config directory");
+        } else {
+          throw std::runtime_error(
+            "Config directory `" + m_configDir + "' inaccessible: " + strerror(errno));
+        }
+      } else if (!S_ISDIR(sbuf.st_mode)) {
+        throw std::runtime_error(
+          "Config directory `" + m_configDir + "' is not a directory");
+      }
+
+      m_canSaveConfig = true;
+    } catch (std::runtime_error const &e) {
+      fprintf(
+        stderr,
+        "warning: cannot create config directory: %s\n", e.what());
+    }
   }
 
-  if (stat(m_configDir.c_str(), &sbuf) == -1) {
-    if (errno == ENOENT) {
-      if (mkdir(m_configDir.c_str(), 0700) == -1)
-        throw std::runtime_error("Failed to create config directory");
-    } else {
-      throw std::runtime_error(
-        "Config directory `" + m_configDir + "' inaccessible: " + strerror(errno));
-    }
-  } else if (!S_ISDIR(sbuf.st_mode)) {
-    throw std::runtime_error(
-      "Config directory `" + m_configDir + "' is not a directory");
+  if (!m_canSaveConfig) {
+    fprintf(
+      stderr,
+      "warning: no writable config directory available, configurations cannot be saved!\n");
   }
 }
 
@@ -155,6 +164,9 @@ ConfigManager::saveAll()
 {
   bool ok = true;
 
+  if (!m_canSaveConfig)
+    return false;
+    
   for (auto p : m_configList)
     ok = p->save() && ok;
 
@@ -167,7 +179,8 @@ ConfigManager::getConfigFilePath(std::string const &name, bool write) const
   if (write)
     return m_configDir + "/" + name + ".yaml";
   else
-    return DataFileManager::instance()->resolve("config/" + name + ".yaml");
+    return DataFileManager::instance()->resolve(
+      CONFIG_MANAGER_DIRECTORY "/" + name + ".yaml");
 }
 
 ConfigManager *
