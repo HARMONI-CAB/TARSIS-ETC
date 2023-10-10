@@ -32,11 +32,20 @@ set(PROJECT_SOURCES
         res/zoomable_chart_widget_resources.qrc
 )
 
+# Define application icons
+set(MACOSX_BUNDLE_ICON_FILE CalGUI.icns)
+set(app_icon_macos "${CMAKE_CURRENT_SOURCE_DIR}/icons/CalGUI.icns")
+set_source_files_properties(
+    ${app_icon_macos}
+    PROPERTIES
+    MACOSX_PACKAGE_LOCATION "Resources")
+           
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(CalGUI
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
+
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET CalGUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -62,7 +71,7 @@ target_include_directories(
   PRIVATE ../LibETC/include ${YAMLCPP_INCLUDE_DIRS})
 
 set_target_properties(CalGUI PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_GUI_IDENTIFIER calgui.tarsisetc.cab.inta-csic.es
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
