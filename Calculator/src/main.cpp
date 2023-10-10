@@ -14,13 +14,14 @@ help(const char *progName)
   fprintf(stderr, "brightness (radiance) spectrum, specified in the wavelength\n");
   fprintf(stderr, "axis (nm). \n\nOPTIONS can be any of the following:\n");
   fprintf(stderr, "\t-a, --airmass [AIRMASS]    Set airmass (default is 1)\n");
-  fprintf(stderr, "\t-d, --detector [DET]       Set detector to DET (ML15 or NBB, default is ML15)\n");
+  fprintf(stderr, "\t-b, --blue-det [DET]       Configure blue arm's detector (default is CCD231-84-0-S77)\n");
   fprintf(stderr, "\t-e, --elevation [ANGLE]    Set elevation angle (same as -z 90-ANGLE,\n");
   fprintf(stderr, "\t                           default is 90)\n");
   fprintf(stderr, "\t-m, --magnitude [MAGR_AB]  Normalize spectrum to the specified R(AB)\n");
   fprintf(stderr, "\t                           magnitude (default is 18 mag/arcsec^2)\n");
   fprintf(stderr, "\t-M, --moon [PERCENT]       Set moon illumination, being 0 new\n");
   fprintf(stderr, "\t                           moon and 100 full moon (default is 0)\n");
+  fprintf(stderr, "\t-r, --red-det [DET]        Configure red arm's detector (default is CCD231-84-0-H69)\n");
   fprintf(stderr, "\t-s, --slice [SLICE]        Slice at which calculations are to be\n");
   fprintf(stderr, "\t                           done (from 1 to 40, default is 20)\n");
   fprintf(stderr, "\t-t, --exposure [TIME]      Set exposure time, in seconds (default\n");
@@ -63,22 +64,20 @@ runSimulation(SimulationParams const &params, std::string const &path)
       printf("%s%g", i > 0 ? "," : "", sim->noise(i));
     putchar('\n');
 
-    if (params.detector == "ML15") {
-      sim->simulateArm(RedArm);
+    sim->simulateArm(RedArm);
 
-      for (auto i = 0; i < DETECTOR_PIXELS; ++i)
-        printf("%s%g", i > 0 ? "," : "", sim->pxToWavelength(i));
-      putchar('\n');
+    for (auto i = 0; i < DETECTOR_PIXELS; ++i)
+      printf("%s%g", i > 0 ? "," : "", sim->pxToWavelength(i));
+    putchar('\n');
 
-      for (auto i = 0; i < DETECTOR_PIXELS; ++i)
-        printf("%s%g", i > 0 ? "," : "", sim->signal(i));
-      putchar('\n');
+    for (auto i = 0; i < DETECTOR_PIXELS; ++i)
+      printf("%s%g", i > 0 ? "," : "", sim->signal(i));
+    putchar('\n');
 
 
-      for (auto i = 0; i < DETECTOR_PIXELS; ++i)
-        printf("%s%g", i > 0 ? "," : "", sim->noise(i));
-      putchar('\n');
-    }
+    for (auto i = 0; i < DETECTOR_PIXELS; ++i)
+      printf("%s%g", i > 0 ? "," : "", sim->noise(i));
+    putchar('\n');
 
     ok = true;
   } catch (std::runtime_error const &e) {
@@ -99,14 +98,16 @@ int
 main(int argc, char **argv)
 {
   SimulationParams params;
-  const char* const short_opt = "a:e:M:m:s:t:z:h";
+  const char* const short_opt = "a:b:e:M:m:r:s:t:z:h";
   double angle;
   int opt;
   const option long_opt[] = {
     {"airmass",         required_argument, nullptr, 'a'},
+    {"blue-det",        required_argument, nullptr, 'b'},
     {"elevation",       required_argument, nullptr, 'e'},
     {"magnitude",       required_argument, nullptr, 'm'},
     {"moon",            required_argument, nullptr, 'M'},
+    {"red-det",         required_argument, nullptr, 'r'},
     {"slice",           required_argument, nullptr, 's'},
     {"exposure",        required_argument, nullptr, 't'},
     {"zenith-distance", required_argument, nullptr, 'z'},
@@ -130,8 +131,8 @@ main(int argc, char **argv)
         }
         break;
 
-      case 'd':
-        params.detector = optarg;
+      case 'b':
+        params.blueDetector = optarg;
         break;
 
       case 'e':
@@ -167,6 +168,10 @@ main(int argc, char **argv)
         }
         break;
 
+      case 'r':
+        params.redDetector = optarg;
+        break;
+      
       case 's':
         if (sscanf(optarg, "%u", &params.slice) < 1) {
           fprintf(stderr, "%s: invalid slice number `%s'\n", argv[0], optarg);

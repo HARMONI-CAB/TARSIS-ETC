@@ -87,10 +87,19 @@ MainWindow::MainWindow(QWidget *parent)
         m_redSNRWidget,
         "Red arm");
 
+  populateDetectorCombo(
+        ui->blueDetCombo,
+        QString::fromStdString(m_simParams.blueDetector));
+
+  populateDetectorCombo(
+        ui->redDetCombo,
+        QString::fromStdString(m_simParams.redDetector));
+
   connectAll();
 
   refreshUi();
   refreshMeasurements();
+
   ui->actionSave_data_as->setEnabled(false);
 
   emit initWorker();
@@ -103,6 +112,34 @@ MainWindow::~MainWindow()
   delete m_workerThread;
 
   delete ui;
+}
+
+void
+MainWindow::populateDetectorCombo(QComboBox *combo, QString defl)
+{
+  int count = 0;
+  int index = -1;
+
+  combo->clear();
+
+  auto detectors = &ConfigManager::get<DetectorProperties>("detectors");
+
+  if (detectors == nullptr) {
+    QMessageBox::critical(this, "Detectors", "Critical: no detector config found.");
+    QApplication::quit();
+    return;
+  }
+
+  for (auto p : detectors->detectors) {
+    QString detName = QString::fromStdString(p.first);
+
+    if (defl == detName)
+      index = count;
+    combo->addItem(detName);
+    ++count;
+  }
+
+  BLOCKSIG(combo, setCurrentIndex(index));
 }
 
 void
@@ -119,6 +156,8 @@ MainWindow::refreshUi()
   BLOCKSIG(ui->moonSpinBox, setValue(m_simParams.moon));
   BLOCKSIG(ui->sliceSpinBox, setValue(m_simParams.slice));
   BLOCKSIG(ui->exposureTimeSpinBox, setValue(m_simParams.exposure));
+  BLOCKSIG(ui->blueDetCombo, setCurrentText(QString::fromStdString(m_simParams.blueDetector)));
+  BLOCKSIG(ui->redDetCombo, setCurrentText(QString::fromStdString(m_simParams.redDetector)));
 }
 
 bool
@@ -144,13 +183,14 @@ MainWindow::parse()
 
   ui->inputFileEdit->setStyleSheet(css);
 
-  m_simParams.airmass  = ui->airmassSpinBox->value();
-  m_simParams.detector = "ML15"; // Leave this by default
-  m_simParams.exposure = ui->exposureTimeSpinBox->value();
-  m_simParams.moon     = ui->moonSpinBox->value();
-  m_simParams.progName = "CalGUI";
-  m_simParams.rABmag   = ui->magSpinBox->value();
-  m_simParams.slice    = ui->sliceSpinBox->value();
+  m_simParams.airmass      = ui->airmassSpinBox->value();
+  m_simParams.blueDetector = ui->blueDetCombo->currentText().toStdString();
+  m_simParams.redDetector  = ui->redDetCombo->currentText().toStdString();
+  m_simParams.exposure     = ui->exposureTimeSpinBox->value();
+  m_simParams.moon         = ui->moonSpinBox->value();
+  m_simParams.progName     = "CalGUI";
+  m_simParams.rABmag       = ui->magSpinBox->value();
+  m_simParams.slice        = ui->sliceSpinBox->value();
 
   return ok;
 }
@@ -191,12 +231,13 @@ MainWindow::refreshMeasurements()
       int pixel = static_cast<int>(std::round(pxBlue));
       if (pixel >= 0 && pixel < DETECTOR_PIXELS) {
         size_t ndx = static_cast<size_t>(pixel);
+        double snr = p.blueArm.signal[ndx] / p.blueArm.noise[ndx];
+        auto sciStr = asScientific(snr);
+
         if (p.blueArm.signal[ndx] > 0 || p.blueArm.noise[ndx] > 0) {
-          QString line = QString::asprintf(
-                "Run #%-2d [blue]: S = %g, N = %g (%g SNR)\n", i,
-                p.blueArm.signal[ndx],
-                p.blueArm.noise[ndx],
-                p.blueArm.signal[ndx] / p.blueArm.noise[ndx]);
+          QString line = QString::asprintf("Run #%-2d [BLUE]: SNR = ", i);
+          line += sciStr;
+          line += "\n";
 
           ui->allSeriesLabel->setText(ui->allSeriesLabel->text() + line);
         }
@@ -208,12 +249,13 @@ MainWindow::refreshMeasurements()
       int pixel = static_cast<int>(std::round(pxRed));
       if (pixel >= 0 && pixel < DETECTOR_PIXELS) {
         size_t ndx = static_cast<size_t>(pixel);
+        double snr = p.redArm.signal[ndx] / p.redArm.noise[ndx];
+        auto sciStr = asScientific(snr);
         if (p.redArm.signal[ndx] > 0 || p.redArm.noise[ndx] > 0) {
-          QString line = QString::asprintf(
-                "Run #%-2d [red ]: S = %g / N = %g (%g SNR)\n", i,
-                p.redArm.signal[ndx],
-                p.redArm.noise[ndx],
-                p.redArm.signal[ndx] / p.redArm.noise[ndx]);
+          QString line = QString::asprintf("Run #%-2d [RED]:  SNR = ", i);
+          line += sciStr;
+          line += "\n";
+
 
           ui->allSeriesLabel->setText(ui->allSeriesLabel->text() + line);
         }
@@ -387,6 +429,7 @@ MainWindow::onClearPlots()
   m_blueSNRWidget->chart()->removeAllSeries();
   m_redSNRWidget->chart()->removeAllSeries();
   m_haveClickedPoint = false;
+  m_lastProducts.clear();
   ui->actionSave_data_as->setEnabled(false);
   refreshMeasurements();
 }
@@ -500,6 +543,7 @@ MainWindow::onDataProduct(CalculationProduct product)
       static_cast<unsigned>(m_blueSNRWidget->chart()->series().size());
   unsigned c = curves % (sizeof(plotPal) / sizeof(plotPal[0]));
   QColor color = QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]);
+
   if (product.blueArm.initialized) {
     double max = 1;
     auto series = new QScatterSeries;
@@ -516,7 +560,7 @@ MainWindow::onDataProduct(CalculationProduct product)
 
       series->append(
             1e9 * product.blueArm.wavelength[i],
-            product.blueArm.signal[i]);
+            product.blueArm.counts[i]);
     }
 
     m_blueY->setRange(0, max);
@@ -542,7 +586,7 @@ MainWindow::onDataProduct(CalculationProduct product)
         max = product.redArm.signal[i];
       series->append(
             1e9 * product.redArm.wavelength[i],
-            product.redArm.signal[i]);
+            product.redArm.counts[i]);
     }
 
     m_redY->setRange(0, max);

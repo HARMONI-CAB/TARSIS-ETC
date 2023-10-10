@@ -44,7 +44,7 @@ InstrumentProperties::serialize()
 
   self["fNum"]         = fNum;
   self["apEfficiency"] = apEfficiency;
-  self["sdetector"]    = detector;
+  self["coating"]      = coating;
 
   return true;
 }
@@ -56,7 +56,7 @@ InstrumentProperties::deserialize()
 
   deserializeField(fNum, "fNum");
   deserializeField(apEfficiency, "apEfficiency");
-  deserializeField(detector, "detector");
+  deserializeField(coating, "coating");
 
   return true;
 }
@@ -287,23 +287,23 @@ InstrumentModel::setInput(InstrumentArm arm, Spectrum const &input)
   double totalScale;
   const Curve *transmission = nullptr;
   
-  std::string const &det = m_properties->detector;
+  std::string const &coating = m_properties->coating;
 
   switch (arm) {
     case BlueArm:
-      if (det == "ML15")
+      if (coating == "ML15")
         transmission = m_blueML15;
-      else if (det == "NBB")
+      else if (coating == "NBB")
         transmission = m_blueNBB;
       else
-        throw std::runtime_error("Unknown detector for blue arm: `" + det + "'");
+        throw std::runtime_error(coating + " is not a supported AR coating for the blue arm");
       break;
 
     case RedArm:
-      if (det == "ML15")
+      if (coating == "ML15")
         transmission = m_redML15;
       else
-        throw std::runtime_error("Unknown detector for red arm: `" + det + "'");
+        throw std::runtime_error(coating + " is not a supported AR coating for the red arm");
       break;
 
     default:

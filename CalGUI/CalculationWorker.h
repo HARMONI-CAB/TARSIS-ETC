@@ -28,11 +28,12 @@
 Q_DECLARE_METATYPE(SimulationParams)
 
 struct SNRCurve {
-  bool                initialized = false;
-  Curve               wlToPixel;
-  std::vector<double> wavelength;
-  std::vector<double> signal;
-  std::vector<double> noise;
+  bool                  initialized = false;
+  Curve                 wlToPixel;
+  std::vector<double>   wavelength;
+  std::vector<double>   signal;
+  std::vector<double>   noise;
+  std::vector<unsigned> counts;
 
   SNRCurve();
 };

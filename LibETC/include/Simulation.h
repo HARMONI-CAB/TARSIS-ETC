@@ -28,13 +28,14 @@
 #include <Detector.h>
 
 struct SimulationParams {
-  const char *progName = nullptr;
-  std::string detector = "ML15";
-  double airmass       = 1.;
-  double moon          = 0.;
-  double exposure      = 3600;
-  double rABmag        = 18.;
-  int    slice         = 20;
+  const char *progName     = nullptr;
+  std::string blueDetector = "CCD231-84-0-S77";
+  std::string redDetector  = "CCD231-84-0-H69";
+  double airmass           = 1.;
+  double moon              = 0.;
+  double exposure          = 3600;
+  double rABmag            = 18.;
+  int    slice             = 20;
 };
 
 class Simulation {

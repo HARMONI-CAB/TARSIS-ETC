@@ -1,5 +1,9 @@
 detectors:
-  ML15:
-  NBB:
+  CCD231-84-0-S77:
+    readOutNoise: 2.1
+    coating: NBB
 
+  CCD231-84-0-H69:
+    readOutNoise: 2.1
+    coating: ML15
 

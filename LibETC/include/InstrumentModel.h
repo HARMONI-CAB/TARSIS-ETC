@@ -39,7 +39,7 @@ struct InstrumentProperties : public Config {
 
   double fNum          = CAHA_FOCAL_LENGTH / CAHA_APERTURE_DIAMETER;
   double apEfficiency  = CAHA_EFFECTIVE_AREA / CAHA_APERTURE_AREA;
-  std::string detector = "ML15";
+  std::string coating  = "ML15";
 
   virtual bool serialize() override;
   virtual bool deserialize() override;

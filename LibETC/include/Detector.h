@@ -22,7 +22,8 @@
 
 #include "ConfigManager.h"
 
-#define DETECTOR_PIXELS 2048
+#define DETECTOR_PIXELS      2048
+#define DETECTOR_TEMPERATURE 193   // K
 
 class Spectrum;
 class Curve;
@@ -30,10 +31,10 @@ class Curve;
 struct DetectorSpec : public Config {
   using Config::Config;
 
+  std::string coating = "ML15";
   double pixelSide    = 15e-6; // m
   double readOutNoise = 0;     // e-
   double gain         = 1.;    // e-/count
-  double darkCurrent  = 0;     // e-/s
   double qE           = 1;     // 1
 
   virtual bool serialize() override;
@@ -69,8 +70,11 @@ class Detector {
     ~Detector();
 
     DetectorProperties *properties() const;
-    unsigned signal(unsigned px) const;
-    unsigned noise(unsigned px) const;
+    DetectorSpec *getSpec() const;
+    double darkElectrons(double T) const;
+    double signal(unsigned px) const;
+    double noise(unsigned px) const;
+    double snr(unsigned px) const;
     const Spectrum *signal() const;
     
     bool setDetector(std::string const &);

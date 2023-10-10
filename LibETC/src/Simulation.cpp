@@ -109,12 +109,9 @@ Simulation::setParams(SimulationParams const &params)
 
   // Update sky spectrum
   m_sky = m_skyModel->makeSkySpectrum(m_input);
-  
-  m_det->setDetector(params.detector);
-  m_det->setExposureTime(params.exposure);
 
-  auto prop = m_tarsisModel->properties();
-  prop->detector = params.detector;
+  // Update detector config
+  m_det->setExposureTime(params.exposure);
 }
 
 void
@@ -123,6 +120,27 @@ Simulation::simulateArm(InstrumentArm arm)
   Spectrum *flux = nullptr;
 
   try {
+    auto tarsisProp = m_tarsisModel->properties();
+    std::string detName;
+
+    switch (arm) {
+      case BlueArm:
+        detName = m_params.blueDetector;
+        break;
+
+      case RedArm:
+        detName = m_params.redDetector;
+        break;
+
+      default:
+        throw std::runtime_error("Unknown arm");
+    }
+
+    if (!m_det->setDetector(detName))
+      throw std::runtime_error("Unknown detector `" + detName + "'");
+
+    // Set coating
+    tarsisProp->coating = m_det->getSpec()->coating;
     m_tarsisModel->setInput(arm, *m_sky);
     flux = m_tarsisModel->makePixelPhotonFlux(m_params.slice);
     m_det->setPixelPhotonFlux(*flux);

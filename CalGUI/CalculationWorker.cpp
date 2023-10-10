@@ -19,6 +19,7 @@
 
 
 #include "CalculationWorker.h"
+#include <random>
 
 static bool g_registered = false;
 
@@ -103,6 +104,7 @@ SNRCurve::SNRCurve()
   wavelength.resize(DETECTOR_PIXELS);
   signal.resize(DETECTOR_PIXELS);
   noise.resize(DETECTOR_PIXELS);
+  counts.resize(DETECTOR_PIXELS);
 }
 
 void
@@ -115,28 +117,38 @@ CalculationWorker::simulate()
 
   try {
     CalculationProduct result;
+    std::default_random_engine generator;
 
     m_simulation->simulateArm(BlueArm);
 
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      double lambda = m_simulation->noise(i);
+      lambda *= lambda;
+      std::poisson_distribution<unsigned> distribution(lambda);
+
       result.blueArm.wavelength[i] = m_simulation->pxToWavelength(i);
       result.blueArm.wlToPixel     = m_simulation->wlToPixelCurve();
       result.blueArm.signal[i]     = m_simulation->signal(i);
       result.blueArm.noise[i]      = m_simulation->noise(i);
+      result.blueArm.counts[i]     = distribution(generator);
     }
     result.blueArm.initialized = true;
 
-    if (m_simParams.detector == "ML15") {
-      m_simulation->simulateArm(RedArm);
+    m_simulation->simulateArm(RedArm);
 
-      for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
-        result.redArm.wavelength[i] = m_simulation->pxToWavelength(i);
-        result.redArm.wlToPixel     = m_simulation->wlToPixelCurve();
-        result.redArm.signal[i]     = m_simulation->signal(i);
-        result.redArm.noise[i]      = m_simulation->noise(i);
-      }
-      result.redArm.initialized = true;
+    for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      double lambda = m_simulation->noise(i);
+      lambda *= lambda;
+      std::poisson_distribution<unsigned> distribution(lambda);
+
+      result.redArm.wavelength[i] = m_simulation->pxToWavelength(i);
+      result.redArm.wlToPixel     = m_simulation->wlToPixelCurve();
+      result.redArm.signal[i]     = m_simulation->signal(i);
+      result.redArm.noise[i]      = m_simulation->noise(i);
+      result.redArm.counts[i]     = distribution(generator);
     }
+
+    result.redArm.initialized = true;
 
     emit done("simulate");
     emit dataProduct(result);

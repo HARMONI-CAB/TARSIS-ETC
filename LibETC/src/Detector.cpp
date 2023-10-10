@@ -30,7 +30,7 @@ DetectorSpec::serialize()
   self["pixelSide"]    = pixelSide;
   self["readOutNoise"] = readOutNoise;
   self["gain"]         = gain;
-  self["darkCurrent"]  = darkCurrent;
+  self["coating"]      = coating;
 
   return true;
 }
@@ -43,7 +43,7 @@ DetectorSpec::deserialize()
   deserializeField(pixelSide,    "pixelSide");
   deserializeField(readOutNoise, "readOutNoise");
   deserializeField(gain,         "gain");
-  deserializeField(darkCurrent,  "darkCurrent");
+  deserializeField(coating,      "coating");
 
   return true;
 }
@@ -141,7 +141,7 @@ Detector::properties() const
   return m_properties;
 }
 
-unsigned
+double
 Detector::signal(unsigned px) const
 {
   return (*m_signal)(px);
@@ -153,12 +153,18 @@ Detector::signal() const
   return m_signal;
 }
 
-unsigned
+double
 Detector::noise(unsigned px) const
 {
   return (*m_noise)(px);
 }
-    
+
+double
+Detector::snr(unsigned px) const
+{
+  return (*m_signal)(px) / (*m_noise)(px);
+}
+
 void
 Detector::setPixelPhotonFlux(Spectrum const &flux)
 {
@@ -176,11 +182,32 @@ bool
 Detector::setDetector(std::string const &det)
 {
   auto it = m_properties->detectors.find(det);
-  if (it == m_properties->detectors.end())
+  if (it == m_properties->detectors.end()) {
+    m_detector = nullptr;
     return false;
+  }
 
   m_detector = it->second;
   return true;
+}
+
+DetectorSpec *
+Detector::getSpec() const
+{
+  return m_detector;
+}
+
+double
+Detector::darkElectrons(double T) const
+{
+  const double area  = m_detector->pixelSide * m_detector->pixelSide;
+  const double Qd0   = 6.2415091e+13 * area; // e/s/m^2 =  1 nA / cm^2;
+  const double Tbeta = 6400.;
+  const double slope = 122.;
+
+  double Qd = m_expostureTime * Qd0 * slope * pow(T, 3) * exp(-Tbeta / T);
+
+  return Qd;
 }
 
 void
@@ -203,10 +230,11 @@ Detector::recalculate()
   m_signal->fromExisting(*m_electronsPerPixel, invGain);
 
   // Compute noise floor
-  double noiseFloor = 
-    m_detector->readOutNoise + m_detector->darkCurrent * m_expostureTime;
+  double noiseFloorSquared = 
+      darkElectrons(DETECTOR_TEMPERATURE)
+      + m_detector->readOutNoise * m_detector->readOutNoise;
   
   m_noise->clear();
-  (*m_noise)[m_signal->xMin()] = invGain * noiseFloor;
-  (*m_noise)[m_signal->xMax()] = invGain * noiseFloor;
+  for (auto p : m_electronsPerPixel->xPoints())
+    (*m_noise)[p] = invGain * sqrt((*m_electronsPerPixel)[p] + noiseFloorSquared);
 }

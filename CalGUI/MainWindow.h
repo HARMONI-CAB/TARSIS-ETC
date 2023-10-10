@@ -13,6 +13,7 @@ QT_END_NAMESPACE
 class QFileDialog;
 class ZoomableChartWidget;
 class QValueAxis;
+class QComboBox;
 
 class MainWindow : public QMainWindow
 {
@@ -38,6 +39,7 @@ class MainWindow : public QMainWindow
   QString             m_filePath;
   QFileDialog        *m_openFileDialog = nullptr;
   QFileDialog        *m_saveFileDialog = nullptr;
+  void                populateDetectorCombo(QComboBox *, QString defl);
   void                refreshUiState();
   void                connectAll();
   bool                parse();
