@@ -563,7 +563,7 @@ Curve::load(std::string const &path, bool transpose, unsigned xCol, unsigned yCo
           yCol + 1,
           i + 1,
           asString.c_str());
-      } catch (std::runtime_error const &e) {
+      } catch (std::exception const &e) {
         fprintf(
           stderr,
           "warning: %s:row %d: col %d: out of bounds! (blank line?)\n",
@@ -590,7 +590,7 @@ Curve::load(std::string const &path, bool transpose, unsigned xCol, unsigned yCo
           i + 1,
           yCol + 1,
           asString.c_str());
-      } catch (std::runtime_error const &e) {
+      } catch (std::exception const &e) {
         fprintf(
           stderr,
           "warning: %s:row %d: col %d: out of bounds! (blank line?)\n",

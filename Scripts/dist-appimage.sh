@@ -98,7 +98,7 @@ embed_calculator_deps
 
 try "Executing build fixups..." build_fixups
 try "Running silly linuxdeployqt workaround..." cp "$DEPLOYROOT"/usr/bin/CalGUI "$DEPLOYROOT"/usr/bin/TARSISETC
-try "Calling linuxdeployqt..." linuxdeployqt "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop -bundle-non-qt-libs -extra-plugins=iconengines
+try "Calling linuxdeployqt..." linuxdeployqt "$DEPLOYROOT"/usr/share/applications/TARSISETC.desktop -bundle-non-qt-libs
 try "Copying wrapper script..." cp "$SCRIPTDIR"/AppRun "$DEPLOYROOT"/usr/bin/TARSISETC
 try "Setting permissions to wrapper script..." chmod a+x "$DEPLOYROOT"/usr/bin/TARSISETC
 try "Calling AppImageTool and finishing..." appimagetool "$DEPLOYROOT"
