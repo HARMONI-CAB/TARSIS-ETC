@@ -33,7 +33,7 @@ struct SNRCurve {
   std::vector<double>   wavelength;
   std::vector<double>   signal;
   std::vector<double>   noise;
-  std::vector<unsigned> counts;
+  std::vector<int>      counts;
 
   SNRCurve();
 };

@@ -20,6 +20,7 @@
 #include <Detector.h>
 #include <Spectrum.h>
 #include <stdexcept>
+#include <cmath>
 
 //////////////////////////// DetectorSpec //////////////////////////////
 bool
