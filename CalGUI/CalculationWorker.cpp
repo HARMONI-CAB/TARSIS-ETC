@@ -20,6 +20,8 @@
 
 #include "CalculationWorker.h"
 #include "GUIHelpers.h"
+#include <random>
+#include <sys/time.h>
 
 static bool g_registered = false;
 
@@ -117,31 +119,54 @@ CalculationWorker::simulate()
 
   try {
     CalculationProduct result;
+    std::default_random_engine generator;
+    double ron, invGain;
+    struct timeval tv;
+    gettimeofday(&tv, nullptr);
+
     m_simulation->simulateArm(BlueArm);
 
+    generator.seed(
+          static_cast<uint64_t>(tv.tv_usec)
+          + static_cast<uint64_t>(tv.tv_sec) * 1000000ull);
+
+    invGain = 1. / m_simulation->gain();
+    ron = m_simulation->readOutNoise(); // In counts
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      double electrons = m_simulation->electrons(i);
       double signal = m_simulation->signal(i);
       double noise  = m_simulation->noise(i);
+      std::poisson_distribution<int> shotElectrons(electrons);
 
       result.blueArm.wavelength[i] = m_simulation->pxToWavelength(i);
       result.blueArm.wlToPixel     = m_simulation->wlToPixelCurve();
       result.blueArm.signal[i]     = signal;
       result.blueArm.noise[i]      = noise;
-      result.blueArm.counts[i]     = static_cast<int>(signal + noise * randNormal());
+      result.blueArm.counts[i]     =
+          static_cast<int>(
+              invGain * shotElectrons(generator)
+            + ron * randNormal());
     }
     result.blueArm.initialized = true;
 
     m_simulation->simulateArm(RedArm);
 
+    invGain = 1. / m_simulation->gain();
+    ron = m_simulation->readOutNoise();
     for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+      double electrons = m_simulation->electrons(i);
       double signal = m_simulation->signal(i);
       double noise  = m_simulation->noise(i);
+      std::poisson_distribution<int> shotElectrons(electrons);
 
       result.redArm.wavelength[i] = m_simulation->pxToWavelength(i);
       result.redArm.wlToPixel     = m_simulation->wlToPixelCurve();
       result.redArm.signal[i]     = signal;
       result.redArm.noise[i]      = noise;
-      result.redArm.counts[i]     = static_cast<int>(signal + noise * randNormal());
+      result.redArm.counts[i]     =
+          static_cast<int>(
+              invGain * shotElectrons(generator)
+            + ron * randNormal());
     }
 
     result.redArm.initialized = true;

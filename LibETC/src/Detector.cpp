@@ -115,7 +115,6 @@ Detector::Detector()
   m_photonsPerPixel    = new Spectrum();
   m_electronsPerPixel  = new Spectrum();
   m_signal             = new Spectrum();
-  m_noise              = new Spectrum();
 }
 
 Detector::~Detector()
@@ -131,39 +130,12 @@ Detector::~Detector()
 
   if (m_signal != nullptr)
     delete m_signal;
-
-  if (m_noise != nullptr)
-    delete m_noise;
 }
 
 DetectorProperties *
 Detector::properties() const
 {
   return m_properties;
-}
-
-double
-Detector::signal(unsigned px) const
-{
-  return (*m_signal)(px);
-}
-
-const Spectrum *
-Detector::signal() const
-{
-  return m_signal;
-}
-
-double
-Detector::noise(unsigned px) const
-{
-  return (*m_noise)(px);
-}
-
-double
-Detector::snr(unsigned px) const
-{
-  return (*m_signal)(px) / (*m_noise)(px);
 }
 
 void
@@ -230,12 +202,68 @@ Detector::recalculate()
   // Turn this into counts
   m_signal->fromExisting(*m_electronsPerPixel, invGain);
 
-  // Compute noise floor
-  double noiseFloorSquared = 
-      darkElectrons(DETECTOR_TEMPERATURE)
-      + m_detector->readOutNoise * m_detector->readOutNoise;
+  // Add dark electrons to the electron-per-pixel curve
+  m_electronsPerPixel->add(darkElectrons(DETECTOR_TEMPERATURE));
+}
+
+double
+Detector::signal(unsigned px) const
+{
+  return (*m_signal)(px);
+}
+
+const Spectrum *
+Detector::signal() const
+{
+  return m_signal;
+}
+
+double
+Detector::electrons(unsigned px) const
+{
+  return (*m_electronsPerPixel)(px);
+}
+
+const Spectrum *
+Detector::electrons() const
+{
+  return m_electronsPerPixel;
+}
+
+//
+// Noise readout counts. This is the standard deviation of a Gaussian,
+// describing the voltage fluctuations in the output amplifier as seen
+// by the detector's ADC.
+//
+double
+Detector::readOutNoise() const
+{
+  if (m_detector == nullptr)
+    throw std::runtime_error("No detector selected");
+
+  return m_detector->readOutNoise / m_detector->gain;
+}
+
+//
+// Standard deviation of the noise. We use this for SNR calculation, in
+// counts.
+//
+double
+Detector::noise(unsigned px) const
+{
+  double ron2     = readOutNoise();
+  double invGain2 = 1. / (m_detector->gain * m_detector->gain);
   
-  m_noise->clear();
-  for (auto p : m_electronsPerPixel->xPoints())
-    (*m_noise)[p] = invGain * sqrt((*m_electronsPerPixel)[p] + noiseFloorSquared);
+  ron2 *= ron2;
+
+  return sqrt(invGain2 * electrons(px) + ron2);
+}
+
+//
+// Signal-to-noise ratio. Unitless, as both signal() and noise() are in counts.
+//
+double
+Detector::snr(unsigned px) const
+{
+  return signal(px) / noise(px);
 }

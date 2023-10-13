@@ -169,6 +169,29 @@ Simulation::noise(unsigned px) const
 }
 
 double
+Simulation::electrons(unsigned px) const
+{
+  return m_det->electrons(px);
+}
+
+double
+Simulation::readOutNoise() const
+{
+  return m_det->readOutNoise();
+}
+
+double
+Simulation::gain() const
+{
+  auto spec = m_det->getSpec();
+
+  if (spec == nullptr)
+    throw std::runtime_error("No detector specified");
+  
+  return spec->gain;
+}
+
+double
 Simulation::pxToWavelength(unsigned px) const
 {
   return (*m_tarsisModel->pxToWavelength(m_params.slice))(px);

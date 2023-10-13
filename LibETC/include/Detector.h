@@ -62,8 +62,7 @@ class Detector {
     Spectrum *m_photonFluxPerPixel; // ph / (px m^2 s)
     Spectrum *m_photonsPerPixel;    // ph/px
     Spectrum *m_electronsPerPixel;  // e/px
-    Spectrum *m_signal;             // counts
-    Spectrum *m_noise;              // noise
+    Spectrum *m_signal;             // c
 
   public:
     Detector();
@@ -72,11 +71,14 @@ class Detector {
     DetectorProperties *properties() const;
     DetectorSpec *getSpec() const;
     double darkElectrons(double T) const;
-    double signal(unsigned px) const;
-    double noise(unsigned px) const;
-    double snr(unsigned px) const;
-    const Spectrum *signal() const;
-    
+    double signal(unsigned px) const;       // c
+    double electrons(unsigned px) const;    // e
+    double noise(unsigned px) const;        // c
+    double readOutNoise() const;            // c
+    double snr(unsigned px) const;          // 1
+    const Spectrum *signal() const;         // c
+    const Spectrum *electrons() const;      // e
+
     bool setDetector(std::string const &);
     void setPixelPhotonFlux(Spectrum const &);
     void setExposureTime(double);

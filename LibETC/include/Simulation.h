@@ -60,6 +60,9 @@ class Simulation {
     void simulateArm(InstrumentArm arm);
     double signal(unsigned px) const;
     double noise(unsigned px) const;
+    double electrons(unsigned px) const;
+    double readOutNoise() const;
+    double gain() const;
     double pxToWavelength(unsigned px) const;
     Curve const &wlToPixelCurve() const;
 };
