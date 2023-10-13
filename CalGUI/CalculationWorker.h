@@ -49,10 +49,14 @@ class CalculationWorker : public QObject
 {
   Q_OBJECT
 
-  Simulation *m_simulation = nullptr;
+  Simulation      *m_simulation = nullptr;
   SimulationParams m_simParams;
-  bool      m_newSpectrum = false;
-  Spectrum m_inputSpectrum;
+  bool             m_newSpectrum = false;
+  Spectrum         m_inputSpectrum;
+
+  void             simulateArm(InstrumentArm, SNRCurve &);
+  void             singleShot();
+  void             allSlices();
 
 public:
   CalculationWorker(QObject *parent = nullptr);
@@ -66,6 +70,7 @@ public slots:
 
 signals:
   void done(QString);
+  void progress(qreal);
   void dataProduct(CalculationProduct);
   void exception(QString);
 };

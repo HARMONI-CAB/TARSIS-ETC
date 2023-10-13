@@ -12,6 +12,7 @@
 #include <QScatterSeries>
 #include <QValueAxis>
 #include <DataFileManager.h>
+#include <QProgressBar>
 
 // Thanks tab10
 static uint8_t plotPal[][3] = {
@@ -78,6 +79,11 @@ MainWindow::MainWindow(QWidget *parent)
   m_redY->setRange(0, 32768);
   m_redY->setTitleText("Counts");
   m_redSNRWidget->chart()->addAxis(m_redY, Qt::AlignLeft);
+
+  m_progress = new QProgressBar;
+  ui->statusbar->addPermanentWidget(m_progress);
+  m_progress->setEnabled(false);
+  m_progress->setVisible(true);
 
   ui->tabWidget->addTab(
         m_blueSNRWidget,
@@ -175,7 +181,7 @@ MainWindow::parse()
     else
       msg = "Input file \"" + info.fileName() + "\" is not accessible.";
 
-    ui->statusbar->showMessage(msg, 5000);
+    m_progress->setFormat(msg);
 
     css = "background-color: #ff7f7f;";
     ok = false;
@@ -190,7 +196,9 @@ MainWindow::parse()
   m_simParams.moon         = ui->moonSpinBox->value();
   m_simParams.progName     = "CalGUI";
   m_simParams.rABmag       = ui->magSpinBox->value();
-  m_simParams.slice        = ui->sliceSpinBox->value();
+  m_simParams.slice        = ui->allSlicesCheck->isChecked()
+                             ? -1
+                             : ui->sliceSpinBox->value();
 
   return ok;
 }
@@ -198,7 +206,11 @@ MainWindow::parse()
 void
 MainWindow::refreshUiState()
 {
-  ui->sliceSpinBox->setEnabled(!ui->averageSpinBox->isChecked());
+  bool enabled = !m_lastProducts.empty();
+  ui->sliceSpinBox->setEnabled(!ui->allSlicesCheck->isChecked());
+
+  ui->actionSave_data_as->setEnabled(enabled);
+  ui->actionClear_plots->setEnabled(enabled);
 }
 
 void
@@ -307,9 +319,21 @@ MainWindow::connectAll()
 
   connect(
         m_calcWorker,
+        SIGNAL(progress(qreal)),
+        this,
+        SLOT(onTaskProgress(qreal)));
+
+  connect(
+        m_calcWorker,
         SIGNAL(exception(QString)),
         this,
         SLOT(onTaskException(QString)));
+
+  connect(
+        ui->allSlicesCheck,
+        SIGNAL(toggled(bool)),
+        this,
+        SLOT(onUIStateChanged()));
 
   connect(
         ui->browseButton,
@@ -380,11 +404,112 @@ MainWindow::connectAll()
 }
 
 void
+MainWindow::plotNewCurves()
+{
+  unsigned curves =
+      static_cast<unsigned>(m_blueSNRWidget->chart()->series().size());
+  unsigned newCurves = m_lastProducts.size();
+  unsigned count = 0;
+
+  ui->actionSave_data_as->setEnabled(false);
+  ui->actionClear_plots->setEnabled(false);
+  m_progress->setEnabled(true);
+  m_progress->setFormat("Updating plots (%p%)...");
+
+  for (auto &product : m_lastProducts) {
+    unsigned c = count % (sizeof(plotPal) / sizeof(plotPal[0]));
+    QColor color = QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]);
+    qreal progress;
+
+    if (count++ < curves)
+      continue;
+
+    progress = 100 * (count - curves) / (newCurves - curves);
+
+    m_progress->setValue(static_cast<int>(progress));
+
+    if (product.blueArm.initialized) {
+      double max = 1;
+      auto series = new QScatterSeries;
+
+      series->setName("Run #" + QString::number(count));
+      series->setColor(color);
+      series->setBorderColor(color);
+      series->setMarkerShape(QScatterSeries::MarkerShapeRectangle);
+      series->setMarkerSize(2);
+
+      for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+        if (product.blueArm.signal[i] > max)
+          max = product.blueArm.signal[i];
+
+        series->append(
+              1e9 * product.blueArm.wavelength[i],
+              product.blueArm.counts[i]);
+      }
+
+      m_blueY->setRange(0, max);
+
+
+      m_blueSNRWidget->chart()->addSeries(series);
+      series->attachAxis(m_blueX);
+      series->attachAxis(m_blueY);
+      m_blueSNRWidget->fitInView();
+      QApplication::processEvents();
+    }
+
+    if (product.redArm.initialized) {
+      double max = 1;
+      auto series = new QScatterSeries;
+      series->setName("Run #" + QString::number(count));
+      series->setColor(color);
+      series->setBorderColor(color);
+      series->setMarkerShape(QScatterSeries::MarkerShapeRectangle);
+      series->setMarkerSize(2);
+
+      for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
+        if (product.redArm.signal[i] > max)
+          max = product.redArm.signal[i];
+        series->append(
+              1e9 * product.redArm.wavelength[i],
+              product.redArm.counts[i]);
+      }
+
+      m_redY->setRange(0, max);
+
+      m_redSNRWidget->chart()->addSeries(series);
+      series->attachAxis(m_redX);
+      series->attachAxis(m_redY);
+      m_redSNRWidget->fitInView();
+      QApplication::processEvents();
+    }
+  }
+
+  m_progress->setEnabled(false);
+  m_progress->setFormat("Plots updated");
+  m_progress->setValue(0);
+
+  refreshUiState();
+}
+
+void
 MainWindow::onTaskDone(QString what)
 {
-  ui->statusbar->showMessage(
-        "Background task \"" + what + "\" finished successfully.",
-        5000);
+  m_progress->setFormat("Background task \"" + what + "\" finished successfully.");
+  m_progress->setEnabled(false);
+  m_progress->setValue(0);
+
+  if (what == "simulate")
+    plotNewCurves();
+}
+
+void
+MainWindow::onTaskProgress(qreal progress)
+{
+  m_progress->setEnabled(true);
+  m_progress->setFormat("Calculating (%p%)...");
+  m_progress->setValue(static_cast<int>(progress));
+
+  QApplication::processEvents();
 }
 
 void
@@ -431,6 +556,7 @@ MainWindow::onClearPlots()
   m_haveClickedPoint = false;
   m_lastProducts.clear();
   ui->actionSave_data_as->setEnabled(false);
+  ui->actionClear_plots->setEnabled(false);
   refreshMeasurements();
 }
 
@@ -539,66 +665,8 @@ MainWindow::onFileTextEdited()
 void
 MainWindow::onDataProduct(CalculationProduct product)
 {
-  unsigned curves =
-      static_cast<unsigned>(m_blueSNRWidget->chart()->series().size());
-  unsigned c = curves % (sizeof(plotPal) / sizeof(plotPal[0]));
-  QColor color = QColor(plotPal[c][0], plotPal[c][1], plotPal[c][2]);
-
-  if (product.blueArm.initialized) {
-    double max = 1;
-    auto series = new QScatterSeries;
-
-    series->setName("Counts (run #" + QString::number(curves + 1) + ")");
-    series->setColor(color);
-    series->setBorderColor(color);
-    series->setMarkerShape(QScatterSeries::MarkerShapeRectangle);
-    series->setMarkerSize(2);
-
-    for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
-      if (product.blueArm.signal[i] > max)
-        max = product.blueArm.signal[i];
-
-      series->append(
-            1e9 * product.blueArm.wavelength[i],
-            product.blueArm.counts[i]);
-    }
-
-    m_blueY->setRange(0, max);
-
-
-    m_blueSNRWidget->chart()->addSeries(series);
-    series->attachAxis(m_blueX);
-    series->attachAxis(m_blueY);
-    m_blueSNRWidget->fitInView();
-  }
-
-  if (product.redArm.initialized) {
-    double max = 1;
-    auto series = new QScatterSeries;
-    series->setName("Counts (run #" + QString::number(curves + 1) + ")");
-    series->setColor(color);
-    series->setBorderColor(color);
-    series->setMarkerShape(QScatterSeries::MarkerShapeRectangle);
-    series->setMarkerSize(2);
-
-    for (unsigned i = 0; i < DETECTOR_PIXELS; ++i) {
-      if (product.redArm.signal[i] > max)
-        max = product.redArm.signal[i];
-      series->append(
-            1e9 * product.redArm.wavelength[i],
-            product.redArm.counts[i]);
-    }
-
-    m_redY->setRange(0, max);
-
-    m_redSNRWidget->chart()->addSeries(series);
-    series->attachAxis(m_redX);
-    series->attachAxis(m_redY);
-    m_redSNRWidget->fitInView();
-  }
-
   m_lastProducts.push_back(product);
-  ui->actionSave_data_as->setEnabled(true);
+  refreshUiState();
   refreshMeasurements();
 }
 
@@ -608,4 +676,10 @@ MainWindow::onPlotPointClicked(QPointF p)
   m_clickedPoint = p;
   m_haveClickedPoint = true;
   refreshMeasurements();
+}
+
+void
+MainWindow::onUIStateChanged()
+{
+  refreshUiState();
 }

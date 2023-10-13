@@ -14,6 +14,7 @@ class QFileDialog;
 class ZoomableChartWidget;
 class QValueAxis;
 class QComboBox;
+class QProgressBar;
 
 class MainWindow : public QMainWindow
 {
@@ -23,6 +24,7 @@ class MainWindow : public QMainWindow
   QThread             *m_workerThread = nullptr;
   bool                 m_haveClickedPoint = false;
   QPointF              m_clickedPoint;
+  QProgressBar        *m_progress = nullptr;
 
   std::list<CalculationProduct>
                        m_lastProducts;
@@ -47,6 +49,7 @@ class MainWindow : public QMainWindow
   void                resetMeasurements();
   void                refreshMeasurements();
   bool                saveDataProduct(std::string const &);
+  void                plotNewCurves();
 
 public:
   MainWindow(QWidget *parent = nullptr);
@@ -65,7 +68,9 @@ public slots:
   void onTaskDone(QString);
   void onTaskException(QString);
   void onDataProduct(CalculationProduct);
+  void onTaskProgress(qreal);
 
+  void onUIStateChanged();
   void onBrowseFile();
   void onSimulate();
   void onSaveProduct();
